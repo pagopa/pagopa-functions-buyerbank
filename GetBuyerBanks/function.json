@@ -16,5 +16,5 @@
       "name": "res"
     }
   ],
-  "scriptFile": "../dist/HttpTriggerFunction/index.js"
+  "scriptFile": "../dist/GetBuyerBanks/index.js"
 }
