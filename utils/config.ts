@@ -18,8 +18,14 @@ export type IConfig = t.TypeOf<typeof IConfig>;
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const IConfig = t.interface({
   AzureWebJobsStorage: NonEmptyString,
+  MY_BANK_CERT: NonEmptyString,
+  MY_BANK_CERT_PASSPHRASE: NonEmptyString,
+  MY_BANK_CERT_PRIV_KEY: NonEmptyString,
+  MY_BANK_RS_URL: NonEmptyString,
+  MY_BANK_SIGN_ALG: NonEmptyString,
+  MY_BANK_SIGN_ALG_STRING: NonEmptyString,
+  MY_BANK_THUMBPRINT: NonEmptyString,
   QueueStorageConnection: NonEmptyString,
-
   isProduction: t.boolean
 });
 
