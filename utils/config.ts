@@ -20,7 +20,7 @@ export const IConfig = t.interface({
   AzureWebJobsStorage: NonEmptyString,
   MY_BANK_CERT: NonEmptyString,
   MY_BANK_CERT_PASSPHRASE: NonEmptyString,
-  MY_BANK_CERT_PRIV_KEY: NonEmptyString,
+  MY_BANK_KEY: NonEmptyString,
   MY_BANK_RS_URL: NonEmptyString,
   MY_BANK_SIGN_ALG: NonEmptyString,
   MY_BANK_SIGN_ALG_STRING: NonEmptyString,
