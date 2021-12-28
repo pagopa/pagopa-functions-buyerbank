@@ -12,6 +12,10 @@ import { getLogger } from "../utils/logging";
 import { sign } from "../utils/auth";
 // import { toDefaultResponseErrorInternal } from "../utils/responses";
 
+/*
+ * Time triggered function for daily buyerbank list update
+ */
+
 const conf = getConfigOrThrow();
 
 const mybankclient = MyBankClient.createClient({
@@ -32,13 +36,16 @@ const params = {
   input: body
 };
 
-export const getUpdateBuyerBank = async (
+export const UpdateBuyerBank = async (
   context: Context,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   timer: any
 ): Promise<void> => {
-  context.log(`Timed update executed, timer: ${timer}`);
-  context.log(`key: ${conf.MY_BANK_CERT_PASSPHRASE.toString()}`);
+  getLogger(context, "BuyerBankService", "UpdateBuyerBank").logInfo(
+    `Timed update executed, timer: ${timer}`
+  );
+  const logger = getLogger(context, "BuyerBankService", "UpdateBuyerBank");
+
   pipe(
     sign(
       JSON.stringify(body),
@@ -47,7 +54,7 @@ export const getUpdateBuyerBank = async (
       conf.MY_BANK_SIGN_ALG.toString()
     ),
     E.fold(
-      (e: Error) => console.log(e), // toDefaultResponseErrorInternal(e),
+      (e: Error) => logger.logUnknown(e),
       async (signature: string) =>
         await pipe(
           withApiRequestWrapper(
@@ -60,8 +67,8 @@ export const getUpdateBuyerBank = async (
             200
           ),
           // TODO: fix flow
-          TE.mapLeft(err => console.log(err)), // toDefaultResponseErrorInternal(e),
-          TE.map(res => console.log(`Result: ${JSON.stringify(res)}`)) // update blob storage
+          TE.mapLeft(err => logger.logUnknown(err)),
+          TE.map(res => logger.logInfo(`Result: ${JSON.stringify(res)}`)) // update blob storage
         )()
     )
   );
