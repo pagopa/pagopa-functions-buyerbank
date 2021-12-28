@@ -7,6 +7,10 @@ import {
 import { Millisecond } from "@pagopa/ts-commons/lib/units";
 import nodeFetch from "node-fetch";
 
+/*
+ * Set of custom fetch functions
+ */
+
 // 10 seconds timeout by default
 const DEFAULT_REQUEST_TIMEOUT_MS = 10000;
 

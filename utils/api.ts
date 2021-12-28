@@ -11,6 +11,10 @@ import {
   toErrorServerResponse
 } from "./responses";
 
+/*
+ * API utility function for response handling
+ */
+
 export const withApiRequestWrapper = <T, V>(
   logger: ILogger,
   apiCallWithParams: () => Promise<

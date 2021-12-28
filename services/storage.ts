@@ -2,6 +2,9 @@
 /* eslint-disable functional/immutable-data */
 import { BlobItem, BlobServiceClient } from "@azure/storage-blob";
 
+/*
+ * Collection of convenient function for Azure Blob Storage
+ */
 export const listBlobs = (
   blobServiceClient: BlobServiceClient,
   container: string
@@ -21,7 +24,7 @@ export const getLastBlob = async (
     if (
       res === undefined ||
       blob.properties.lastModified.getTime() >
-      res.properties.lastModified.getTime()
+        res.properties.lastModified.getTime()
     ) {
       res = blob;
     }

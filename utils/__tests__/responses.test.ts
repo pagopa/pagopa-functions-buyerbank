@@ -4,6 +4,10 @@ import {
   toErrorServerResponse
 } from "../responses";
 
+/*
+ * Unit test suite for responses types and functions
+ */
+
 afterEach(() => {
   jest.resetAllMocks();
   jest.restoreAllMocks();

@@ -3,7 +3,11 @@ import { getLastBlob, listBlobs } from '../storage';
 
 const BLOB_NAME = "blob.json"
 
-it('It should sucessfully featch a blob', async () => {
+/*
+ * Unit test suite for Azure storage service utilities
+ */
+
+it('It should sucessfully fetch a blob', async () => {
 
   const expectedBlob = {
     output: {
@@ -43,7 +47,7 @@ it('It should sucessfully featch a blob', async () => {
   expect(res.value).toBe(expectedBlob)
 });
 
-it('It should sucessfully featch a blob', async () => {
+it('It should sucessfully fetch the last modified blob', async () => {
   const date1 = new Date();
   const date2 = new Date(date1.getTime() + 10 * 1000); // +10 sec
 
@@ -74,4 +78,19 @@ it('It should sucessfully featch a blob', async () => {
   const res = await getLastBlob(blobClientStub as any, BLOB_NAME);
 
   expect(res).toBe(blobs[1])
+});
+
+it('It should fetch undefined', async () => {
+
+  const emptyContainerClientStub = {
+    listBlobsFlat: async function* (): AsyncIterableIterator<BlobItem> { }
+  };
+
+  const blobClientStub = {
+    getContainerClient: (_: any) => emptyContainerClientStub
+  };
+
+  const res = await getLastBlob(blobClientStub as any, BLOB_NAME);
+
+  expect(res).toBe(undefined)
 });
