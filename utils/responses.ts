@@ -16,6 +16,10 @@ import {
 import { toError } from "fp-ts/lib/Either";
 import { Errors } from "io-ts";
 
+/*
+ * Response utilities
+ */
+
 export const unhandledResponseStatus = (
   status: number
 ): IResponseErrorInternal =>

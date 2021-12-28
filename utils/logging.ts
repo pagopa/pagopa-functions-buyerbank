@@ -3,6 +3,10 @@ import { Context } from "@azure/functions";
 import { errorsToReadableMessages } from "@pagopa/ts-commons/lib/reporters";
 import { Errors } from "io-ts";
 
+/*
+ * Logging utilities
+ */
+
 export const getLogger = (
   context: Context,
   logPrefix: string,

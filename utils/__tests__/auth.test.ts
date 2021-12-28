@@ -2,6 +2,9 @@ import { generateKeyPairSync, createVerify } from "crypto";
 import { pipe } from "fp-ts/lib/function";
 import * as O from 'fp-ts/Option';
 
+/*
+ * Unit test suite for authentication utilities
+ */
 
 process.env = {
   MY_BANK_RS_URL: "http://localhost:3000",
@@ -14,6 +17,7 @@ process.env = {
 }
 import { sign } from '../auth';
 
+// Sign a plain text and verify the signature 
 describe("Authentication functions", () => {
   it("Should verify a signature", () => {
     const plainText = "Lorem ipsum sic dolor amet.";

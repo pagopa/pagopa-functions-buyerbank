@@ -1,6 +1,10 @@
 import * as crypto from "crypto";
 import * as E from "fp-ts/Either";
 
+/*
+ * Set of utility functions for the authentication process
+ */
+
 export const encode = (data: string): string =>
   Buffer.from(data).toString("base64");
 

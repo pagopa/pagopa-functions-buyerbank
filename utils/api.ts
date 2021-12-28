@@ -11,6 +11,10 @@ import {
   toErrorServerResponse
 } from "./responses";
 
+/*
+ * API utility function for response handling
+ */
+
 export const withApiRequestWrapper = <T, V>(
   logger: ILogger,
   apiCallWithParams: () => Promise<
@@ -42,8 +46,8 @@ export const withApiRequestWrapper = <T, V>(
             responseType =>
               responseType.status !== successStatusCode
                 ? TE.left(
-                    errorServerHandler(responseType as IResponseType<number, V>)
-                  )
+                  errorServerHandler(responseType as IResponseType<number, V>)
+                )
                 : TE.of(responseType.value as T)
           )
         )
