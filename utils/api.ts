@@ -46,8 +46,8 @@ export const withApiRequestWrapper = <T, V>(
             responseType =>
               responseType.status !== successStatusCode
                 ? TE.left(
-                  errorServerHandler(responseType as IResponseType<number, V>)
-                )
+                    errorServerHandler(responseType as IResponseType<number, V>)
+                  )
                 : TE.of(responseType.value as T)
           )
         )
