@@ -1,9 +1,7 @@
 import * as express from "express";
-import * as t from "io-ts";
 
 import { Context } from "@azure/functions";
 import { ContextMiddleware } from "@pagopa/io-functions-commons/dist/src/utils/middlewares/context_middleware";
-import { RequiredParamMiddleware } from "@pagopa/io-functions-commons/dist/src/utils/middlewares/required_param";
 import {
   withRequestMiddlewares,
   wrapRequestHandler
@@ -11,39 +9,46 @@ import {
 import {
   IResponseErrorNotFound,
   IResponseSuccessJson,
+  ResponseErrorNotFound,
   ResponseSuccessJson
 } from "@pagopa/ts-commons/lib/responses";
+import { pipe } from "fp-ts/lib/function";
+import * as TE from "fp-ts/TaskEither";
+import { BlobItem, BlobServiceClient } from "@azure/storage-blob";
+import { getDayBlobTask } from "../services/storage";
+import { getLogger } from "../utils/logging";
+import { getConfigOrThrow } from "../utils/config";
+
+const conf = getConfigOrThrow();
 
 type IHttpHandler = (
-  context: Context,
-  param: unknown
-) => Promise<
-  | IResponseSuccessJson<{
-      readonly message: string;
-    }>
-  | IResponseErrorNotFound
->;
+  context: Context
+) => Promise<IResponseErrorNotFound | IResponseSuccessJson<string>>;
 
-export const HttpHandler = (): IHttpHandler => async (
-  ctx,
-  param
-): Promise<
-  IResponseSuccessJson<{
-    readonly message: string;
-  }>
-> =>
-  ResponseSuccessJson({
-    headers: ctx.req?.headers,
-    message: `Hello ${param} !`
-  });
-
-export const HttpCtrl = (): express.RequestHandler => {
-  const handler = HttpHandler();
-
-  const middlewaresWrap = withRequestMiddlewares(
-    ContextMiddleware(),
-    RequiredParamMiddleware("someParam", t.string)
+const getBuyerBanks = (): IHttpHandler => (
+  context: Context
+): Promise<IResponseErrorNotFound | IResponseSuccessJson<string>> => {
+  const logger = getLogger(context, "BuyerBankService", "GetBuyerBank");
+  const blobServiceClient = BlobServiceClient.fromConnectionString(
+    conf.MY_BANK_AZ_STORAGE_CONN_STRING
   );
 
-  return wrapRequestHandler(middlewaresWrap(handler));
+  return pipe(
+    getDayBlobTask(blobServiceClient, conf.MY_BANK_CONTAINER_NAME),
+    TE.mapLeft(err => {
+      logger.logUnknown(err);
+      return ResponseErrorNotFound(
+        "Not found",
+        "Daily buyerbank list not found"
+      );
+    }),
+    TE.map(res => ResponseSuccessJson(res)),
+    TE.toUnion
+  )();
+};
+
+export const BuyerbanksCtrl = (): express.RequestHandler => {
+  const middlewaresWrap = withRequestMiddlewares(ContextMiddleware());
+
+  return wrapRequestHandler(middlewaresWrap(getBuyerBanks()));
 };
