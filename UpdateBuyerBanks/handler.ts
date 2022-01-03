@@ -3,6 +3,7 @@ import { Context } from "@azure/functions";
 import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as E from "fp-ts/Either";
+import { BlobServiceClient } from "@azure/storage-blob";
 import * as MyBankClient from "../generated/definitions/mybank/client";
 import { getPayerPSPsSCT01Request } from "../generated/definitions/mybank/getPayerPSPsSCT01Request";
 import { withApiRequestWrapper } from "../utils/api";
@@ -10,6 +11,7 @@ import { getConfigOrThrow } from "../utils/config";
 import { fetchApi } from "../utils/fetch";
 import { getLogger } from "../utils/logging";
 import { sign } from "../utils/auth";
+import { setDayBlobTask } from "../services/storage";
 // import { toDefaultResponseErrorInternal } from "../utils/responses";
 
 /*
@@ -36,7 +38,7 @@ const params = {
   input: body
 };
 
-export const UpdateBuyerBank = async (
+export const updateBuyerBank = async (
   context: Context,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   timer: any
@@ -66,9 +68,28 @@ export const UpdateBuyerBank = async (
               }),
             200
           ),
-          // TODO: fix flow
           TE.mapLeft(err => logger.logUnknown(err)),
-          TE.map(res => logger.logInfo(`Result: ${JSON.stringify(res)}`)) // update blob storage
+          TE.map(async res => {
+            const blobClient = BlobServiceClient.fromConnectionString(
+              conf.MY_BANK_AZ_STORAGE_CONN_STRING
+            );
+            await pipe(
+              setDayBlobTask(
+                blobClient,
+                conf.MY_BANK_CONTAINER_NAME,
+                JSON.stringify(res)
+              ),
+              TE.mapLeft(err => logger.logUnknown(err)),
+              TE.map(resp =>
+                logger.logInfo(
+                  `Response: ${JSON.stringify(
+                    // eslint-disable-next-line no-underscore-dangle
+                    resp._response.status.toString()
+                  )}`
+                )
+              )
+            )();
+          })
         )()
     )
   );
