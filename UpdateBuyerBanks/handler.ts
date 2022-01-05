@@ -85,7 +85,13 @@ export const updateBuyerBank = async (
         setDayBlobTask(
           blobClient,
           conf.MY_BANK_CONTAINER_NAME,
-          JSON.stringify(res)
+          JSON.stringify({
+            ...{
+              banks: res,
+              timestamp: new Date().toISOString()
+            },
+            ...{ serviceId: conf.MY_BANK_RS_URL }
+          })
         ),
         TE.mapLeft(err => {
           logger.logUnknown(err);
