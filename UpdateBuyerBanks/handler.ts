@@ -4,7 +4,7 @@ import { pipe, flow } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as E from "fp-ts/Either";
 import { BlobServiceClient } from "@azure/storage-blob";
-import * as MyBankClient from "../generated/definitions/mybank/client";
+import * as MyBankClient from "../utils/MyBankCustomClient";
 import { withApiRequestWrapper } from "../utils/api";
 import { getConfigOrThrow } from "../utils/config";
 import { fetchApi } from "../utils/fetch";
@@ -24,12 +24,8 @@ const mybankclient = MyBankClient.createClient({
   fetchApi
 });
 
-const body: getPayerPSPsSCT01Request = {
-  input: {
-    branch: conf.MY_BANK_BRANCH,
-    institute: conf.MY_BANK_INSTITUTE
-  }
-};
+// eslint-disable-next-line prettier/prettier
+const body: getPayerPSPsSCT01Request = `{"input":{"branch": "10000","institute": "1000"}}`;;
 
 const params = {
   "X-Signature-Type": conf.MY_BANK_SIGN_ALG_STRING,
