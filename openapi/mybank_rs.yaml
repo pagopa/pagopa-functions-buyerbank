@@ -16,6 +16,8 @@ paths:
     post:
       operationId: getPayerPSPsSCT01
       description: This request allows you to retrieve the list of reachable Buyer Banks in MyBank
+      consumes: 
+        - string
       parameters:
         - in: header
           name: X-Signature-Type
@@ -46,20 +48,7 @@ paths:
           description: generic error           
 definitions:
     getPayerPSPsSCT01Request:
-      type: object
-      required:
-        - input
-      properties:
-        input:
-          type: object
-          required: 
-            - branch
-            - institute
-          properties:
-            branch:
-              type: string
-            institute:
-              type: string
+      type: string
     getPayerPSPsSCT01Response:
       type: object
       required:
