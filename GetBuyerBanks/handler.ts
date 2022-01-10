@@ -14,7 +14,7 @@ import {
 } from "@pagopa/ts-commons/lib/responses";
 import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/TaskEither";
-import { BlobItem, BlobServiceClient } from "@azure/storage-blob";
+import { BlobServiceClient } from "@azure/storage-blob";
 import { getDayBlobTask } from "../services/storage";
 import { getLogger } from "../utils/logging";
 import { getConfigOrThrow } from "../utils/config";
