@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable functional/prefer-readonly-type */
+
 import {
   BlobItem,
   BlobServiceClient,
@@ -71,6 +72,51 @@ const setDayBlob = async (
   const containerClient = blobServiceClient.getContainerClient(container);
 
   const blobName = new Date().toISOString().split("T")[0] + "_buyerbanks.json";
+  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+  return blockBlobClient.upload(content, content.length);
+};
+
+export const getDayBlob = async (
+  blobServiceClient: BlobServiceClient,
+  container: string
+): Promise<Blob | undefined> => {
+  const containerClient = blobServiceClient.getContainerClient(container);
+
+  const downloadResponse = await containerClient
+    .getBlobClient("test.json") //.getBlobClient(new Date().toISOString() + "_buyerbanks.json")
+    .download();
+
+  return downloadResponse.blobBody;
+};
+
+export const getDayBlobTask = (
+  blobServiceClient: BlobServiceClient,
+  container: string
+): TE.TaskEither<Error, Blob | undefined> =>
+  TE.tryCatch(
+    (): Promise<Blob | undefined> => getDayBlob(blobServiceClient, container),
+    E.toError
+  );
+
+export const getLastBlobTask = (
+  blobServiceClient: BlobServiceClient,
+  container: string
+): TE.TaskEither<Error, BlobItem | undefined> =>
+  TE.tryCatch(
+    (): Promise<BlobItem | undefined> =>
+      getLastBlob(blobServiceClient, container),
+    E.toError
+  );
+
+const setDayBlob = async (
+  blobServiceClient: BlobServiceClient,
+  container: string,
+  content: string
+): Promise<BlockBlobUploadResponse> => {
+  const containerClient = blobServiceClient.getContainerClient(container);
+
+  const blobName = new Date().toISOString() + "_buyerbanks.json";
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
   return blockBlobClient.upload(content, content.length);
