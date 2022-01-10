@@ -20,7 +20,7 @@ import { getPayerPSPsSCT01Request } from "../generated/definitions/mybank/getPay
 const conf = getConfigOrThrow();
 
 const mybankclient = MyBankClient.createClient({
-  baseUrl: conf.MY_BANK_RS_URL,
+  baseUrl: conf.PAGOPA_BUYERBANKS_RS_URL,
   fetchApi
 });
 
@@ -28,8 +28,8 @@ const mybankclient = MyBankClient.createClient({
 const body: getPayerPSPsSCT01Request = `{"input":{"branch": "10000","institute": "1000"}}`;;
 
 const params = {
-  "X-Signature-Type": conf.MY_BANK_SIGN_ALG_STRING,
-  "X-Thumbprint": conf.MY_BANK_THUMBPRINT,
+  "X-Signature-Type": conf.PAGOPA_BUYERBANKS_SIGN_ALG_STRING,
+  "X-Thumbprint": conf.PAGOPA_BUYERBANKS_THUMBPRINT,
   input: body
 };
 
@@ -53,9 +53,9 @@ export const updateBuyerBank = async (
       pipe(
         sign(
           JSON.stringify(body),
-          conf.MY_BANK_KEY.toString(),
-          conf.MY_BANK_CERT_PASSPHRASE.toString(),
-          conf.MY_BANK_SIGN_ALG.toString()
+          conf.PAGOPA_BUYERBANKS_KEY_CERT.toString(),
+          conf.PAGOPA_BUYERBANKS_CERT_PASSPHRASE.toString(),
+          conf.PAGOPA_BUYERBANKS_SIGN_ALG.toString()
         ),
         E.fold(
           (err: Error) => logger.logUnknown(err),
@@ -64,7 +64,7 @@ export const updateBuyerBank = async (
       )
     ),
     E.toUnion
-  )(conf.MY_BANK_SIGNATURE);
+  )(conf.PAGOPA_BUYERBANKS_SIGNATURE);
 
   await pipe(
     withApiRequestWrapper(
@@ -79,18 +79,18 @@ export const updateBuyerBank = async (
     TE.mapLeft(err => logger.logUnknown(err)),
     TE.map(async res => {
       const blobClient = BlobServiceClient.fromConnectionString(
-        conf.MY_BANK_AZ_STORAGE_CONN_STRING
+        conf.BUYERBANKS_SA_CONNECTION_STRING
       );
       await pipe(
         setDayBlobTask(
           blobClient,
-          conf.MY_BANK_CONTAINER_NAME,
+          conf.BUYERBANKS_BLOB_CONTAINER,
           JSON.stringify({
             ...{
               banks: res,
               timestamp: new Date().toISOString()
             },
-            ...{ serviceId: conf.MY_BANK_RS_URL }
+            ...{ serviceId: conf.PAGOPA_BUYERBANKS_RS_URL }
           })
         ),
         TE.mapLeft(err => {
