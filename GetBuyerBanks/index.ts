@@ -8,7 +8,7 @@ import { AzureContextTransport } from "@pagopa/io-functions-commons/dist/src/uti
 import { setAppContext } from "@pagopa/io-functions-commons/dist/src/utils/middlewares/context_middleware";
 import createAzureFunctionHandler from "@pagopa/express-azure-functions/dist/src/createAzureFunctionsHandler";
 
-import { HttpCtrl } from "./handler";
+import { BuyerbanksCtrl } from "./handler";
 
 // eslint-disable-next-line functional/no-let
 let logger: Context["log"] | undefined;
@@ -22,7 +22,7 @@ const app = express();
 secureExpressApp(app);
 
 // Add express route
-app.get("/some/path/:someParam", HttpCtrl());
+app.get("/buyerbanks", BuyerbanksCtrl());
 
 const azureFunctionHandler = createAzureFunctionHandler(app);
 
