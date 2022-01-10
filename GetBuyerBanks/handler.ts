@@ -30,11 +30,11 @@ const getBuyerBanks = (): IHttpHandler => (
 ): Promise<IResponseErrorNotFound | IResponseSuccessJson<string>> => {
   const logger = getLogger(context, "BuyerBankService", "GetBuyerBank");
   const blobServiceClient = BlobServiceClient.fromConnectionString(
-    conf.MY_BANK_AZ_STORAGE_CONN_STRING
+    conf.BUYERBANKS_SA_CONNECTION_STRING
   );
 
   return pipe(
-    getDayBlobTask(blobServiceClient, conf.MY_BANK_CONTAINER_NAME),
+    getDayBlobTask(blobServiceClient, conf.BUYERBANKS_BLOB_CONTAINER),
     TE.mapLeft(err => {
       logger.logUnknown(err);
       return ResponseErrorNotFound(
