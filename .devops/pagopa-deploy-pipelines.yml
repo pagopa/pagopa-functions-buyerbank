@@ -72,14 +72,70 @@ stages:
               echo "We assume this reference to be a valid release: $(Build.SourceBranch). Therefore, there is no need to bundle a new release."
             displayName: 'Skip release bundle'
 
-  # Promote to dev
+    # Prepare Artifact
+  - stage: Prepare_artifact
+    dependsOn:
+      - Release
+    jobs:
+      - job: 'prepare_artifact'
+        steps:
+          # Build application
+          - template: templates/node-job-setup/template.yaml@pagopaCommons
+            parameters:
+              # On the assumption that this stage is executed only when Relase stage is,
+              #  with this parameter we set the reference the deploy script must pull changes from.
+              # The branch/tag name is calculated from the source branch
+              #  ex: Build.SourceBranch=refs/heads/master --> master
+              #  ex: Build.SourceBranch=refs/tags/v1.2.3-RELEASE --> v1.2.3-RELEASE
+              gitReference: ${{ replace(replace(variables['Build.SourceBranch'], 'refs/tags/', ''), 'refs/heads/', '') }}
+          - script: |
+              yarn predeploy
+            displayName: 'Build'
+          # Install functions extensions
+          - task: DotNetCoreCLI@2
+            inputs:
+              command: "build"
+              arguments: "-o bin"   
+          # Copy application to  
+          - task: CopyFiles@2
+            inputs:
+              SourceFolder: '$(System.DefaultWorkingDirectory)'
+              TargetFolder: '$(System.DefaultWorkingDirectory)/bundle'
+              Contents: |
+                **/*
+                !.git/**/*
+                !**/*.js.map
+                !**/*.ts
+                !.vscode/**/*
+                !.devops/**/*
+                !.prettierrc
+                !.gitignore
+                !README.md
+                !jest.config.js
+                !local.settings.json
+                !test
+                !tsconfig.json
+                !tslint.json
+                !yarn.lock
+                !Dangerfile.js
+                !CODEOWNERS
+                !__*/**/*
+            displayName: 'Copy deploy files'
+          
+          - publish: $(System.DefaultWorkingDirectory)/bundle
+            artifact: Bundle
+
+
   - stage: Deploy_dev
     dependsOn:
       - Release
     jobs:
-      - job: 'do_deploy'       
-        steps:  
-          - task: AzureAppServiceManage@0   
+      - job: 'do_deploy'
+        steps:
+          - checkout: none
+          - download: current
+            artifact: Bundle
+          - task: AzureFunctionApp@1  
             inputs:
               azureSubscription: '$(DEV_AZURE_SUBSCRIPTION)'
               resourceGroupName: 'pagopa-d-buyerbanks-rg'
@@ -89,5 +145,5 @@ stages:
               deploymentMethod: 'auto'
               deployToSlotOrASE: true
               slotName: 'production'
-            displayName: Deploy to DEV
-           
+              displayName: Deploy to UAT
+            
