@@ -72,94 +72,22 @@ stages:
               echo "We assume this reference to be a valid release: $(Build.SourceBranch). Therefore, there is no need to bundle a new release."
             displayName: 'Skip release bundle'
 
-
-  # Prepare Artifact
-  - stage: Deploy_staging
+  # Promote to dev
+  - stage: Deploy_dev
     dependsOn:
       - Release
-    jobs:
-      - job: 'prepare_artifact_and_deploy'
-        steps:
-          # Build application
-          - template: templates/node-job-setup/template.yaml@pagopaCommons
-            parameters:
-              # On the assumption that this stage is executed only when Relase stage is,
-              #  with this parameter we set the reference the deploy script must pull changes from.
-              # The branch/tag name is calculated from the source branch
-              #  ex: Build.SourceBranch=refs/heads/master --> master
-              #  ex: Build.SourceBranch=refs/tags/v1.2.3-RELEASE --> v1.2.3-RELEASE
-              gitReference: ${{ replace(replace(variables['Build.SourceBranch'], 'refs/tags/', ''), 'refs/heads/', '') }}
-          - script: |
-              yarn predeploy
-            displayName: 'Build'
-
-          # Install functions extensions
-          - task: DotNetCoreCLI@2
-            inputs:
-              command: "build"
-              arguments: "-o bin"   
-          # Copy application to  
-          - task: CopyFiles@2
-            inputs:
-              SourceFolder: '$(System.DefaultWorkingDirectory)'
-              TargetFolder: '$(Build.ArtifactStagingDirectory)'
-              Contents: |
-                **/*
-                !.git/**/*
-                !**/*.js.map
-                !**/*.ts
-                !.vscode/**/*
-                !azure-templates/**/*
-                !azure-pipelines.yml
-                !.prettierrc
-                !.gitignore
-                !README.md
-                !jest.config.js
-                !local.settings.json
-                !test
-                !tsconfig.json
-            displayName: 'Copy deploy files'
-            
-          - task: AzureFunctionApp@1  
-            inputs:
-              azureSubscription: '$(PRODUCTION_AZURE_SUBSCRIPTION)'
-              resourceGroupName: '$(PRODUCTION_RESOURCE_GROUP_NAME)'
-              appType: 'functionApp'
-              appName: '$(PRODUCTION_APP_NAME)'
-              package: '$(Build.ArtifactStagingDirectory)/'
-              deploymentMethod: 'auto'
-              deployToSlotOrASE: true
-              slotName: 'staging'
-            displayName: Deploy to staging slot
-
-  # Check that the staging instance is healthy
-  - stage: Healthcheck
-    pool:
-      name: $(AGENT_POOL)
-    dependsOn:
-      - Deploy_staging
-    jobs:
-      - job: 'do_healthcheck'       
-        steps:  
-          - checkout: none
-          - script: |
-              # fails if response status is not 2xx
-              curl -f 'https://$(PRODUCTION_APP_NAME)-staging.azurewebsites.net/$(HEALTHCHECK_PATH)'
-            displayName: 'Healthcheck'
-
-  # Promote the staging instance to production
-  - stage: Deploy_production
-    dependsOn:
-      - Healthcheck
-      - Deploy_staging
     jobs:
       - job: 'do_deploy'       
         steps:  
           - task: AzureAppServiceManage@0   
             inputs:
-              azureSubscription: '$(PRODUCTION_AZURE_SUBSCRIPTION)'
-              resourceGroupName: '$(PRODUCTION_RESOURCE_GROUP_NAME)'
-              webAppName: '$(PRODUCTION_APP_NAME)'
-              sourceSlot: staging
-              swapWithProduction: true
-            displayName: Swap with production slot
+              azureSubscription: '$(DEV_AZURE_SUBSCRIPTION)'
+              resourceGroupName: 'pagopa-d-buyerbanks-rg'
+              appType: 'functionApp'
+              appName: 'pagopa-d-fn-buyerbanks'
+              package: '$(Pipeline.Workspace)/Bundle'
+              deploymentMethod: 'auto'
+              deployToSlotOrASE: true
+              slotName: 'production'
+            displayName: Deploy to DEV
+           
