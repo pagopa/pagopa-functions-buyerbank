@@ -128,7 +128,7 @@ stages:
 
   - stage: Deploy_dev
     dependsOn:
-      - Release
+      - Prepare_artifact
     jobs:
       - job: 'do_deploy'
         steps:
@@ -145,5 +145,5 @@ stages:
               deploymentMethod: 'auto'
               deployToSlotOrASE: true
               slotName: 'production'
-              displayName: Deploy to UAT
+              displayName: Deploy to DEV
             
