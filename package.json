@@ -21,7 +21,7 @@
     "dist:modules": "modclean -r -n default:safe && yarn install --production",
     "predeploy": "npm-run-all generate build dist:*",
     "generate:definitions": "shx rm -rf ./generated/definitions && mkdir -p ./generated/definitions && gen-api-models --api-spec ./openapi/index.yaml --out-dir ./generated/definitions",
-    "generate:mybank_client": "rimraf generated/definitions/mybank && mkdir -p generated/definitions/mybank && gen-api-models --minify --api-spec ./openapi/mybank_rs.yaml --out-dir ./generated/definitions/mybank --no-strict --request-types --response-decoders --client",
+    "generate:mybank_client": "shx rm -rf ./generated/definitions/mybank && mkdir -p generated/definitions/mybank && gen-api-models --minify --api-spec ./openapi/mybank_rs.yaml --out-dir ./generated/definitions/mybank --no-strict --request-types --response-decoders --client",
     "generate": "npm-run-all generate:*",
     "preversion": "auto-changelog  --config .auto-changelog.json --unreleased --commit-limit false --stdout --template preview.hbs",
     "version": "auto-changelog -p --config .auto-changelog.json --unreleased && git add CHANGELOG.md"
