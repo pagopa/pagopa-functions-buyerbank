@@ -22,7 +22,7 @@ const app = express();
 secureExpressApp(app);
 
 // Add express route
-app.get("/buyerbanks", BuyerbanksCtrl());
+app.get("/api/v1/banks", BuyerbanksCtrl());
 
 const azureFunctionHandler = createAzureFunctionHandler(app);
 
