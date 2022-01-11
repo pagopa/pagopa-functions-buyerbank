@@ -34,23 +34,23 @@ export const InfoHandler = (
 ): InfoHandler => (): Promise<
   IResponseSuccessJson<IInfo> | IResponseErrorInternal
 > =>
-  pipe(
-    envConfig,
-    checkApplicationHealth,
-    TE.map(_ =>
-      ResponseSuccessJson({
-        name: packageJson.name,
-        version: packageJson.version
-      })
-    ),
-    TE.mapLeft(problems => ResponseErrorInternal(problems.join("\n\n"))),
-    TE.toUnion
-  )();
+    pipe(
+      envConfig,
+      checkApplicationHealth,
+      TE.map(_ =>
+        ResponseSuccessJson({
+          name: packageJson.name,
+          version: packageJson.version
+        })
+      ),
+      TE.mapLeft(problems => ResponseErrorInternal(problems.join("\n\n"))),
+      TE.toUnion
+    )();
 
 export const Info = (): express.RequestHandler => {
   const handler = InfoHandler(
     healthcheck.checkApplicationHealth(IConfig, [
-      c => healthcheck.checkAzureStorageHealth(c.QueueStorageConnection)
+      c => healthcheck.checkAzureStorageHealth(c.BUYERBANKS_SA_CONNECTION_STRING)
     ])
   );
 
