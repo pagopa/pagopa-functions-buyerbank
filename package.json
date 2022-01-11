@@ -3,7 +3,7 @@
   "description": "Azure Functions for pagopa myBank buyer list",
   "author": "IO team",
   "repository": "https://github.com/pagopa/pagopa-functions-buyerbank",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "license": "MIT",
   "scripts": {
     "prebuild": "shx rm -rf dist && yarn generate",
