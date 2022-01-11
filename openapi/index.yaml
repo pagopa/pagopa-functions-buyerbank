@@ -43,26 +43,6 @@ paths:
           description: Verification of the signature failed
         "500":
           description: PagoPA services are not available or request is rejected
-    put:
-      operationId: UpdateBuyerBanks
-      summary: Request buyerbank list update
-      description: Synchronize Buyerbank list with MyBank services
-      responses:
-        "200":
-          description: Synchronization process started
-          schema:
-            "$ref": "#/definitions/UpdateBuyerBanksPutResponse"
-          examples:
-            application/json:
-              result: success
-        "401":
-          description: Verification of the signature failed
-        "404":
-          description: Not found
-        "500":
-          description: PagoPA services are not available or request is rejected
-        "502":
-          description: PagoPA upstream services are not available or request is rejected
 definitions:
     BuyerBanksGetResponse:
       type: object
@@ -103,10 +83,4 @@ definitions:
                         type: string
                       language:
                         type: string
-    UpdateBuyerBanksPutResponse:
-      type: object
-      required:
-          - result
-      properties:
-        result:
-          type: string
+
