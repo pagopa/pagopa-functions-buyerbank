@@ -39,9 +39,12 @@ export const getDayBlob = async (
   container: string
 ): Promise<string> => {
   const containerClient = blobServiceClient.getContainerClient(container);
+  // Blobs are updated at 1:00 AM, shift 1h before
+  const currDate = new Date();
+  currDate.setHours(currDate.getHours() - 1);
 
   const downloadResponse = await containerClient
-    .getBlobClient(new Date().toISOString().split("T")[0] + "_buyerbanks.json")
+    .getBlobClient(currDate.toISOString().split("T")[0] + "_buyerbanks.json")
     .download();
 
   if (downloadResponse === undefined) {
