@@ -168,10 +168,24 @@ stages:
               testResultsFiles: '**/*-TEST.xml' 
               searchFolder: '$(System.DefaultWorkingDirectory)'
 
+  - stage: DEV_to_UAT_promotion
+    dependsOn:
+      - Deploy_dev
+    jobs:
+      - job: Deploy_UAT_WaitForApproval
+        displayName: Wait for UAT approval
+        pool: server
+        timeoutInMinutes: 4320 # 3 days
+        steps:
+        - task: ManualValidation@0
+          timeoutInMinutes: 4320 # 3 days
+          inputs:
+            onTimeout: 'skip'
+
+
   - stage: Deploy_uat
     dependsOn:
       - Prepare_artifact
-      - API_Tests
     jobs:
       - job: 'do_deploy'
         steps:
