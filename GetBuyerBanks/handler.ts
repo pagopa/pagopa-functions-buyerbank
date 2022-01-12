@@ -25,7 +25,7 @@ type IHttpHandler = (
   context: Context
 ) => Promise<IResponseErrorNotFound | IResponseSuccessJson<string>>;
 
-const getBuyerBanks = (): IHttpHandler => (
+export const getBuyerBanks = (): IHttpHandler => (
   context: Context
 ): Promise<IResponseErrorNotFound | IResponseSuccessJson<string>> => {
   const logger = getLogger(context, "BuyerBankService", "GetBuyerBank");

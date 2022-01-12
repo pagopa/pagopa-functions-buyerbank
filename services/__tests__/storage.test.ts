@@ -1,96 +1,45 @@
-import { BlobItem } from '@azure/storage-blob';
-import { getLastBlob, listBlobs } from '../storage';
+const mockedStream = require('stream').Readable();
+mockedStream._read = function (size: any) { };
 
-const BLOB_NAME = "blob.json"
+import { BlobServiceClient } from '@azure/storage-blob';
+import { getDayBlob } from '../storage';
 
+const CONTAINER = "blobs"
 /*
  * Unit test suite for Azure storage service utilities
  */
 
-it('It should sucessfully fetch a blob', async () => {
-
-  const expectedBlob = {
-    output: {
-      result: "sucess",
-      messages: [
-        {
-          code: "200",
-          message: "ok",
-          severity: "info"
-        }
-      ],
-      body: {
-        aliases: [
-          {
-            id: 0,
-            participantID: "string",
-            country: "string",
-            alias: "string",
-            language: "string"
-          }
-        ]
-      }
-    }
+jest.mock('@azure/storage-blob', () => ({
+  ...jest.requireActual('@azure/storage-blob'),
+  BlobServiceClient: {
+    fromConnectionString: jest.fn().mockReturnValue({
+      getContainerClient: jest.fn().mockReturnValue({
+        getBlobClient: jest.fn().mockReturnValue({
+          download: jest.fn().mockReturnValue({
+            readableStreamBody: mockedStream
+          })
+        })
+      }),
+    }),
   }
-  const containerClientStub = {
-    listBlobsFlat: async function* (): AsyncIterableIterator<BlobItem> {
-      yield expectedBlob as unknown as BlobItem;
-    }
-  };
+}));
 
-  const blobClientStub = {
-    getContainerClient: (_: any) => containerClientStub
-  };
+describe('storage', () => {
 
-  const res = await listBlobs(blobClientStub as any, BLOB_NAME).next();
 
-  expect(res.value).toBe(expectedBlob)
-});
+  it('It should sucessfully fetch a blob', async () => {
 
-it('It should sucessfully fetch the last modified blob', async () => {
-  const date1 = new Date();
-  const date2 = new Date(date1.getTime() + 10 * 1000); // +10 sec
+    const blobServiceClient = BlobServiceClient.fromConnectionString("");
+    const res = await getDayBlob(blobServiceClient, CONTAINER);
 
-  const blobs = [{
-    key1: "value1",
-    properties: {
-      lastModified: date1
-    }
-  },
-  {
-    key1: "value2",
-    properties: {
-      lastModified: date2
-    }
-  }];
+    expect(res).toBe(JSON.stringify(undefined));
+  });
 
-  const containerClientStub = {
-    listBlobsFlat: async function* (): AsyncIterableIterator<BlobItem> {
-      yield blobs[0] as unknown as BlobItem;
-      yield blobs[1] as unknown as BlobItem;
-    }
-  };
+  it('It should fetch undefined', async () => {
 
-  const blobClientStub = {
-    getContainerClient: (_: any) => containerClientStub
-  };
+    const blobServiceClient = BlobServiceClient.fromConnectionString("");
+    const res = await getDayBlob(blobServiceClient, CONTAINER);
 
-  const res = await getLastBlob(blobClientStub as any, BLOB_NAME);
-
-  expect(res).toBe(blobs[1])
-});
-
-it('It should fetch undefined', async () => {
-
-  const emptyContainerClientStub = {
-    listBlobsFlat: async function* (): AsyncIterableIterator<BlobItem> { }
-  };
-
-  const blobClientStub = {
-    getContainerClient: (_: any) => emptyContainerClientStub
-  };
-
-  const res = await getLastBlob(blobClientStub as any, BLOB_NAME);
-
-  expect(res).toBe(undefined)
+    expect(res).toBe(undefined)
+  });
 });
