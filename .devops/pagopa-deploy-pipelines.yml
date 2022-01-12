@@ -185,7 +185,7 @@ stages:
 
   - stage: Deploy_uat
     dependsOn:
-      - Prepare_artifact
+      - DEV_to_UAT_promotion
     jobs:
       - job: 'do_deploy'
         steps:
