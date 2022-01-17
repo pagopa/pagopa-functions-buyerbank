@@ -1,16 +1,13 @@
-/* eslint-disable no-console */
 import { Context } from "@azure/functions";
 import { pipe, flow } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as E from "fp-ts/Either";
-import { BlobServiceClient } from "@azure/storage-blob";
 import * as MyBankClient from "../utils/MyBankCustomClient";
-import { withApiRequestWrapper } from "../utils/api";
 import { getConfigOrThrow } from "../utils/config";
 import { fetchApi } from "../utils/fetch";
 import { getLogger } from "../utils/logging";
 import { sign } from "../utils/auth";
-import { setDayBlobTask } from "../services/storage";
+import { updateBuyerBankTask } from "../services/storage";
 import { getPayerPSPsSCT01Request } from "../generated/definitions/mybank/getPayerPSPsSCT01Request";
 
 /*
@@ -25,7 +22,7 @@ const mybankclient = MyBankClient.createClient({
 });
 
 // eslint-disable-next-line prettier/prettier
-const body: getPayerPSPsSCT01Request = `{"input":{"branch": "10000","institute": "1000"}}`;;
+const body: getPayerPSPsSCT01Request = `{"input":{"branch": "10000","institute": "1000"}}`;
 
 const params = {
   "X-Signature-Type": conf.PAGOPA_BUYERBANKS_SIGN_ALG_STRING,
@@ -67,44 +64,14 @@ export const updateBuyerBank = async (
   )(conf.PAGOPA_BUYERBANKS_SIGNATURE);
 
   await pipe(
-    withApiRequestWrapper(
-      getLogger(context, "BuyerBankService", "UpdateBuyerBank"),
-      () =>
-        mybankclient.getPayerPSPsSCT01({
-          ...params,
-          ...{ "X-Signature": signedBody as string }
-        }),
-      200
+    updateBuyerBankTask(
+      params,
+      signedBody as string,
+      mybankclient,
+      logger,
+      conf
     ),
     TE.mapLeft(err => logger.logUnknown(err)),
-    TE.map(async res => {
-      const blobClient = BlobServiceClient.fromConnectionString(
-        conf.BUYERBANKS_SA_CONNECTION_STRING
-      );
-      await pipe(
-        setDayBlobTask(
-          blobClient,
-          conf.BUYERBANKS_BLOB_CONTAINER,
-          JSON.stringify({
-            ...{
-              banks: res,
-              timestamp: new Date().toISOString()
-            },
-            ...{ serviceId: conf.PAGOPA_BUYERBANKS_RS_URL }
-          })
-        ),
-        TE.mapLeft(err => {
-          logger.logUnknown(err);
-        }),
-        TE.map(resp =>
-          logger.logInfo(
-            `Response: ${JSON.stringify(
-              // eslint-disable-next-line no-underscore-dangle
-              resp._response.status.toString()
-            )} `
-          )
-        )
-      )();
-    })
+    TE.map(_ => logger.logInfo("List updated"))
   )();
 };

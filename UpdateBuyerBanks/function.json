@@ -4,7 +4,7 @@
       "type": "timerTrigger",
       "direction": "in",
       "name": "timer",
-      "schedule": "5 * * * * *"
+      "schedule": "0 0 1 * * *"
     }
   ],
   "scriptFile": "../dist/UpdateBuyerBanks/index.js"
