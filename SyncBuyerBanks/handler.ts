@@ -1,7 +1,20 @@
+import * as express from "express";
+
 import { Context } from "@azure/functions";
 import { pipe, flow } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as E from "fp-ts/Either";
+import {
+  IResponseErrorInternal,
+  IResponseSuccessJson,
+  ResponseErrorInternal,
+  ResponseSuccessJson
+} from "@pagopa/ts-commons/lib/responses";
+import {
+  withRequestMiddlewares,
+  wrapRequestHandler
+} from "@pagopa/ts-commons/lib/request_middleware";
+import { ContextMiddleware } from "@pagopa/io-functions-commons/dist/src/utils/middlewares/context_middleware";
 import * as MyBankClient from "../utils/MyBankCustomClient";
 import { getConfigOrThrow } from "../utils/config";
 import { fetchApi } from "../utils/fetch";
@@ -10,16 +23,15 @@ import { sign } from "../utils/auth";
 import { updateBuyerBankTask } from "../services/storage";
 import { getPayerPSPsSCT01Request } from "../generated/definitions/mybank/getPayerPSPsSCT01Request";
 
-/*
- * Time triggered function for daily buyerbank list update
- */
-
 const conf = getConfigOrThrow();
 
-const mybankclient = MyBankClient.createClient({
-  baseUrl: conf.PAGOPA_BUYERBANKS_RS_URL,
-  fetchApi
-});
+type IHttpHandler = (
+  context: Context
+) => Promise<IResponseErrorInternal | IResponseSuccessJson<IResponseError>>;
+
+interface IResponseError {
+  readonly result: string;
+}
 
 // eslint-disable-next-line prettier/prettier
 const body: getPayerPSPsSCT01Request = `{"input":{"branch": "10000","institute": "1000"}}`;
@@ -30,15 +42,15 @@ const params = {
   input: body
 };
 
-export const updateBuyerBank = async (
-  context: Context,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  timer: any
-): Promise<void> => {
-  getLogger(context, "BuyerBankService", "UpdateBuyerBank").logInfo(
-    `Timed update executed, timer: ${timer}`
-  );
-  const logger = getLogger(context, "BuyerBankService", "UpdateBuyerBank");
+const mybankclient = MyBankClient.createClient({
+  baseUrl: conf.PAGOPA_BUYERBANKS_RS_URL,
+  fetchApi
+});
+
+export const syncBuyerBanks = (): IHttpHandler => (
+  context: Context
+): Promise<IResponseErrorInternal | IResponseSuccessJson<IResponseError>> => {
+  const logger = getLogger(context, "BuyerBankService", "GetBuyerBank");
 
   const signedBody = flow(
     E.fromPredicate(
@@ -63,7 +75,7 @@ export const updateBuyerBank = async (
     E.toUnion
   )(conf.PAGOPA_BUYERBANKS_SIGNATURE);
 
-  await pipe(
+  return pipe(
     updateBuyerBankTask(
       params,
       signedBody as string,
@@ -71,7 +83,20 @@ export const updateBuyerBank = async (
       logger,
       conf
     ),
-    TE.mapLeft(err => logger.logUnknown(err)),
-    TE.map(_ => logger.logInfo("List updated"))
+    TE.mapLeft(err => {
+      logger.logUnknown(err);
+      return ResponseErrorInternal("Update error");
+    }),
+    TE.map(_ => {
+      logger.logInfo("List updated");
+      return ResponseSuccessJson({ result: "success" } as IResponseError);
+    }),
+    TE.toUnion
   )();
+};
+
+export const SyncBuyerbanksCtrl = (): express.RequestHandler => {
+  const middlewaresWrap = withRequestMiddlewares(ContextMiddleware());
+
+  return wrapRequestHandler(middlewaresWrap(syncBuyerBanks()));
 };

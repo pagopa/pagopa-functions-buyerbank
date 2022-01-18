@@ -7,7 +7,12 @@ import {
   BlockBlobUploadResponse
 } from "@azure/storage-blob";
 import * as E from "fp-ts/lib/Either";
+import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
+import { withApiRequestWrapper } from "../utils/api";
+import { IConfig } from "../utils/config";
+import { ILogger } from "../utils/logging";
+import { ErrorResponses, toErrorServerResponse } from "../utils/responses";
 
 /*
  * Collection of convenient function for Azure Blob Storage
@@ -89,4 +94,57 @@ export const setDayBlobTask = (
     (): Promise<BlockBlobUploadResponse> =>
       setDayBlob(blobServiceClient, container, content),
     E.toError
+  );
+
+const GetMyBanksData = (
+  logger: ILogger,
+  params: any,
+  body: string,
+  client: any
+): TE.TaskEither<ErrorResponses, string> =>
+  withApiRequestWrapper<string, ErrorResponses>(
+    logger,
+    () =>
+      client.getPayerPSPsSCT01({
+        ...params,
+        ...{ "X-Signature": body }
+      }),
+    200,
+    err => toErrorServerResponse(err)
+  );
+
+export const updateBuyerBankTask = (
+  params: any,
+  body: string,
+  client: any,
+  logger: ILogger,
+  conf: IConfig
+): TE.TaskEither<unknown, Error | BlockBlobUploadResponse> =>
+  pipe(
+    GetMyBanksData(logger, params, body, client),
+    TE.chain(res =>
+      TE.tryCatch(
+        () => {
+          const blobClient = BlobServiceClient.fromConnectionString(
+            conf.BUYERBANKS_SA_CONNECTION_STRING
+          );
+
+          return pipe(
+            setDayBlobTask(
+              blobClient,
+              conf.BUYERBANKS_BLOB_CONTAINER,
+              JSON.stringify({
+                ...{
+                  banks: res,
+                  timestamp: new Date().toISOString()
+                },
+                ...{ serviceId: conf.PAGOPA_BUYERBANKS_RS_URL }
+              })
+            ),
+            TE.toUnion
+          )();
+        },
+        reason => reason
+      )
+    )
   );
