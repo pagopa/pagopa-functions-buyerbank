@@ -1,12 +1,12 @@
 {
   "info": {
-    "_postman_id": "187adf03-0b5d-45d5-bfc1-96cdcbec0234",
-    "name": "buyerbanks - API tests",
+    "_postman_id": "d842b6a9-8cd9-4ea4-9bf3-e02f4aec16d7",
+    "name": "buyerbank - API TEST",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "getPayerPSPsSCT01",
+      "name": "GET Buyerbanks - SUCESS",
       "event": [
         {
           "listen": "test",
@@ -15,55 +15,92 @@
               "pm.test(\"Status code is 200\", function () {",
               "    pm.response.to.have.status(200);",
               "});",
-              "",
-              "pm.test(\"Check success message\", function () {",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.output.result).to.eql(\"success\");",
-              "});"
+              ""
             ],
             "type": "text/javascript"
           }
         }
       ],
       "request": {
-        "method": "POST",
+        "method": "GET",
         "header": [
           {
-            "key": "X-Signature-Type",
-            "value": "{{MYBANK_SIGN_ALG}}",
-            "type": "text"
+            "key": "Ocp-Apim-Subscription-Key",
+            "value": "{{Ocp-Apim-Subscription-Key}}",
+            "type": "default"
           },
           {
-            "key": "X-Signature",
-            "value": "{{MYBANK_SIGNATURE}}",
-            "type": "text"
-          },
-          {
-            "key": "X-Thumbprint",
-            "value": "{{MYBANK_THUMBPRINT}}",
-            "type": "text"
-          },
-          {
-            "key": "Content-Type",
-            "value": "application/json;charset=UTF-8",
-            "type": "text"
+            "key": "Ocp-Apim-Trace",
+            "value": "true",
+            "type": "default"
           }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"input\": {\n    \"branch\": \"{{MYBANK_BRANCH}}\",\n    \"institute\": \"{{MYBANK_INSTITUTE}}\"\n  }\n}"
-        },
         "url": {
-          "raw": "{{MY_BANK_BASEPATH}}/mybank-gateway-api/rest/sct01/rs/getPayerPSPsSCT01",
+          "raw": "https://api.dev.platform.pagopa.it/api/buyerbanks/v1/banks",
+          "protocol": "https",
           "host": [
-            "{{MY_BANK_BASEPATH}}"
+            "api",
+            "dev",
+            "platform",
+            "pagopa",
+            "it"
           ],
           "path": [
-            "mybank-gateway-api",
-            "rest",
-            "sct01",
-            "rs",
-            "getPayerPSPsSCT01"
+            "api",
+            "buyerbanks",
+            "v1",
+            "banks"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GET Buyerbanks - UNAUTH",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 401\", function () {",
+              "    pm.response.to.have.status(401);",
+              "});",
+              "",
+              ""
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Ocp-Apim-Subscription-Key",
+            "value": "WRONG",
+            "type": "default"
+          },
+          {
+            "key": "Ocp-Apim-Trace",
+            "value": "true",
+            "type": "default"
+          }
+        ],
+        "url": {
+          "raw": "https://api.dev.platform.pagopa.it/api/buyerbanks/v1/banks",
+          "protocol": "https",
+          "host": [
+            "api",
+            "dev",
+            "platform",
+            "pagopa",
+            "it"
+          ],
+          "path": [
+            "api",
+            "buyerbanks",
+            "v1",
+            "banks"
           ]
         }
       },
@@ -88,32 +125,6 @@
           ""
         ]
       }
-    }
-  ],
-  "variable": [
-    {
-      "key": "MY_BANK_BASEPATH",
-      "value": "host.docker.internal:3000"
-    },
-    {
-      "key": "MYBANK_SIGN_ALG",
-      "value": "SHA256withRSA"
-    },
-    {
-      "key": "MYBANK_SIGNATURE",
-      "value": "signature"
-    },
-    {
-      "key": "MYBANK_THUMBPRINT",
-      "value": "thumbprint"
-    },
-    {
-      "key": "MYBANK_BRANCH",
-      "value": "branch"
-    },
-    {
-      "key": "MYBANK_INSTITUTE",
-      "value": "institute"
     }
   ]
 }

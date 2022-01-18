@@ -147,3 +147,59 @@ stages:
               slotName: 'production'
               displayName: Deploy to DEV
             
+  - stage: API_Tests
+    dependsOn:
+      - Deploy_dev
+    pool:
+      vmImage: 'ubuntu-latest'
+    jobs:
+      - job: api_tests
+        steps:
+          - script: |
+              yarn global add newman
+            displayName: 'newman installation'
+          - script: |
+              newman run ../api-tests/buyerbanks.api.tests.json --environment=../api-tests/dev.envs.json --reporters cli,junit --reporter-junit-export Results/buyerbanks-api-TEST.xml
+            displayName: 'Run api test'
+            continueOnError: true 
+          - task: PublishTestResults@2
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/*-TEST.xml' 
+              searchFolder: '$(System.DefaultWorkingDirectory)'
+
+  - stage: DEV_to_UAT_promotion
+    dependsOn:
+      - Deploy_dev
+    jobs:
+      - job: Deploy_UAT_WaitForApproval
+        displayName: Wait for UAT approval
+        pool: server
+        timeoutInMinutes: 4320 # 3 days
+        steps:
+        - task: ManualValidation@0
+          timeoutInMinutes: 4320 # 3 days
+          inputs:
+            onTimeout: 'skip'
+
+
+  - stage: Deploy_uat
+    dependsOn:
+      - DEV_to_UAT_promotion
+    jobs:
+      - job: 'do_deploy'
+        steps:
+          - checkout: none
+          - download: current
+            artifact: Bundle
+          - task: AzureFunctionApp@1  
+            inputs:
+              azureSubscription: '$(UAT_AZURE_SUBSCRIPTION)'
+              resourceGroupName: 'pagopa-u-buyerbanks-rg'
+              appType: 'functionApp'
+              appName: 'pagopa-u-fn-buyerbanks'
+              package: '$(Pipeline.Workspace)/Bundle'
+              deploymentMethod: 'auto'
+              deployToSlotOrASE: true
+              slotName: 'production'
+              displayName: Deploy to UAT

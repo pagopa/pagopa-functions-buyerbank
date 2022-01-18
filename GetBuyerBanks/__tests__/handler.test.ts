@@ -1,18 +1,18 @@
 /* tslint:disable: no-any */
 process.env = {
-  MY_BANK_RS_URL: "http://localhost:3000",
-  MY_BANK_SIGN_ALG: "RSA-SHA512",
-  MY_BANK_SIGN_ALG_STRING: "SHA256withRSA",
-  MY_BANK_CERT: "NonEmptyString",
-  MY_BANK_CERT_PRIV_KEY: "NonEmptyString",
-  AzureWebJobsStorage: "NonEmptyString",
-  QueueStorageConnection: "NonEmptyString",
-  MY_BANK_CERT_PASSPHRASE: "NonEmptyString",
-  MY_BANK_CONTAINER_NAME: "NonEmptyString",
-  MY_BANK_KEY: "NonEmptyString",
-  MY_BANK_THUMBPRINT: "NonEmptyString",
-  MY_BANK_AZ_STORAGE_CONN_STRING: "NonEmptyString"
-
+  BUYERBANKS_BLOB_CONTAINER: "banks",
+  BUYERBANKS_SA_CONNECTION_STRING: "UseDevelopmentStorage=true;",
+  PAGOPA_BUYERBANKS_BRANCH: "1000",
+  PAGOPA_BUYERBANKS_CERT: "NonEmptyString",
+  PAGOPA_BUYERBANKS_CERT_PASSPHRASE: "",
+  PAGOPA_BUYERBANKS_INSTITUTE: "100",
+  PAGOPA_BUYERBANKS_KEY_CERT: "cert",
+  PAGOPA_BUYERBANKS_RS_URL: "NonEmptyString",
+  PAGOPA_BUYERBANKS_SIGNATURE: "NonEmptyString",
+  PAGOPA_BUYERBANKS_SIGN_ALG: "RSA-SHA256",
+  PAGOPA_BUYERBANKS_SIGN_ALG_STRING: "SHA256withRSA",
+  PAGOPA_BUYERBANKS_THUMBPRINT: "NonEmptyString",
+  AzureWebJobsStorage: "NonEmptyString"
 }
 import { getBuyerBanks } from "../handler";
 import * as TE from "fp-ts/TaskEither"
