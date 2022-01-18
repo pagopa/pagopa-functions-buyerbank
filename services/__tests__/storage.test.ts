@@ -2,6 +2,7 @@ import { Readable } from 'stream'
 const buyerbanks = `{"output":{"result":"200","messages":[],"body":{"aliases":[{"id":1,"participantID":"AA123456","country":"IT","alias":"ALIAS.","language":"it"}]}}}`
 const dataStream = Readable['from']([JSON.stringify(buyerbanks)])
 
+
 import { BlobServiceClient } from '@azure/storage-blob';
 import { getDayBlob } from '../storage';
 
