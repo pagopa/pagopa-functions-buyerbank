@@ -203,3 +203,39 @@ stages:
               deployToSlotOrASE: true
               slotName: 'production'
               displayName: Deploy to UAT
+
+  - stage: UAT_to_PROD_promotion
+    dependsOn:
+      - Deploy_uat
+    jobs:
+      - job: Deploy_PROD_WaitForApproval
+        displayName: Wait for PROD approval
+        pool: server
+        timeoutInMinutes: 4320 # 3 days
+        steps:
+        - task: ManualValidation@0
+          timeoutInMinutes: 4320 # 3 days
+          inputs:
+            onTimeout: 'skip'
+
+
+  - stage: Deploy_prod
+    dependsOn:
+      - UAT_to_PROD_promotion
+    jobs:
+      - job: 'do_deploy'
+        steps:
+          - checkout: none
+          - download: current
+            artifact: Bundle
+          - task: AzureFunctionApp@1  
+            inputs:
+              azureSubscription: '$(PROD_AZURE_SUBSCRIPTION)'
+              resourceGroupName: 'pagopa-p-buyerbanks-rg'
+              appType: 'functionApp'
+              appName: 'pagopa-p-fn-buyerbanks'
+              package: '$(Pipeline.Workspace)/Bundle'
+              deploymentMethod: 'auto'
+              deployToSlotOrASE: true
+              slotName: 'production'
+              displayName: Deploy to PROD
