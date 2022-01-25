@@ -159,7 +159,7 @@ stages:
               yarn global add newman
             displayName: 'newman installation'
           - script: |
-              newman run ../api-tests/buyerbanks.api.tests.json --environment=../api-tests/dev.envs.json --reporters cli,junit --reporter-junit-export Results/buyerbanks-api-TEST.xml
+              newman run https://raw.githubusercontent.com/pagopa/pagopa-functions-buyerbank/master/api-tests/buyerbanks.api.tests.json --environment=https://raw.githubusercontent.com/pagopa/pagopa-functions-buyerbank/master/api-tests/dev.envs.json --reporters cli,junit --reporter-junit-export Results/buyerbanks-api-TEST.xml
             displayName: 'Run api test'
             continueOnError: true 
           - task: PublishTestResults@2
