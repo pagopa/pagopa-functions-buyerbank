@@ -1,4 +1,7 @@
-import { IResponseType } from "@pagopa/ts-commons/lib/requests";
+import {
+  IResponseType,
+  ResponseHeaders
+} from "@pagopa/ts-commons/lib/requests";
 import * as E from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
@@ -14,6 +17,11 @@ import {
 /*
  * API utility function for response handling
  */
+export interface IResponseWithHeaders<T> {
+  readonly value: T;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  readonly headers: ResponseHeaders;
+}
 
 export const withApiRequestWrapper = <T, V>(
   logger: ILogger,
@@ -24,7 +32,7 @@ export const withApiRequestWrapper = <T, V>(
   errorServerHandler: <S extends number>(
     response: IResponseType<S, V>
   ) => ErrorResponses = toErrorServerResponse
-): TaskEither<ErrorResponses, T> =>
+): TaskEither<ErrorResponses, IResponseWithHeaders<T>> =>
   pipe(
     TE.tryCatch(
       () => apiCallWithParams(),
@@ -48,7 +56,10 @@ export const withApiRequestWrapper = <T, V>(
                 ? TE.left(
                     errorServerHandler(responseType as IResponseType<number, V>)
                   )
-                : TE.of(responseType.value as T)
+                : TE.of({
+                    headers: responseType.headers,
+                    value: responseType.value as T
+                  })
           )
         )
     )

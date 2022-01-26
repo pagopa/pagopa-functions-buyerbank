@@ -23,3 +23,19 @@ export const sign = (
     },
     err => E.toError(err)
   );
+
+export const verify = (
+  plainText: string,
+  signedText: string,
+  key: string,
+  algorithm: string
+): E.Either<Error, boolean> =>
+  E.tryCatch(
+    () => {
+      const verifierObject = crypto.createVerify(algorithm);
+      verifierObject.update(plainText);
+
+      return verifierObject.verify(key, signedText, "base64");
+    },
+    err => E.toError(err)
+  );

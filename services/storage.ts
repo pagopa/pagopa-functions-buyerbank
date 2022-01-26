@@ -9,7 +9,9 @@ import {
 import * as E from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
-import { withApiRequestWrapper } from "../utils/api";
+import * as O from "fp-ts/Option";
+import { IResponseWithHeaders, withApiRequestWrapper } from "../utils/api";
+import { verify } from "../utils/auth";
 import { IConfig } from "../utils/config";
 import { ILogger } from "../utils/logging";
 import { ErrorResponses, toErrorServerResponse } from "../utils/responses";
@@ -101,8 +103,8 @@ const GetMyBanksData = (
   params: any,
   body: string,
   client: any
-): TE.TaskEither<ErrorResponses, string> =>
-  withApiRequestWrapper<string, ErrorResponses>(
+): TE.TaskEither<ErrorResponses, IResponseWithHeaders<string>> =>
+  withApiRequestWrapper<string, IResponseWithHeaders<string>>(
     logger,
     () =>
       client.getPayerPSPsSCT01({
@@ -122,9 +124,53 @@ export const updateBuyerBankTask = (
 ): TE.TaskEither<unknown, Error | BlockBlobUploadResponse> =>
   pipe(
     GetMyBanksData(logger, params, body, client),
-    TE.chain(res =>
+    TE.chain(response =>
       TE.tryCatch(
         () => {
+          const res = response.value;
+
+          // eslint-disable-next-line no-console
+          console.log(
+            `DEBUG:\n${JSON.stringify(response.value)} -\n{${JSON.stringify(
+              response.headers
+            )}}`
+          );
+          if (
+            response.headers["Cache-Control"] !==
+            conf.PAGOPA_BUYERBANKS_THUMBPRINT_PEER
+          ) {
+            logger.logInfo(
+              `Cannot validate response. Unkown thumbprint. ${JSON.stringify(
+                response.headers
+              )}`
+            );
+            throw new Error(
+              "Error cannot verify the signature. Unknown thumbprint"
+            );
+          }
+
+          pipe(
+            verify(
+              body,
+              "", // response.headers["X-Signature"],
+              conf.PAGOPA_BUYERBANKS_CERT_PEER,
+              "" // response.headers["X-Signature-Type"]
+            ),
+            O.fromEither,
+            O.fold(
+              () => {
+                logger.logInfo("Error during signature verify.");
+                throw new Error("Signature cannot be verified");
+              },
+              verified => {
+                if (!verified) {
+                  logger.logInfo("Signature does not match.");
+                  throw new Error("Invalid signature");
+                }
+              }
+            )
+          );
+
           const blobClient = BlobServiceClient.fromConnectionString(
             conf.BUYERBANKS_SA_CONNECTION_STRING
           );
