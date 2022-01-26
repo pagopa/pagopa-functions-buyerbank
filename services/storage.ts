@@ -128,9 +128,10 @@ export const updateBuyerBankTask = (
       TE.tryCatch(
         () => {
           const res = response.value;
+          const headers: Headers = response.headers as Headers;
 
           if (
-            response.headers["X-Thumbprint"] !==
+            headers.get("x-thumbprint") !==
             conf.PAGOPA_BUYERBANKS_THUMBPRINT_PEER
           ) {
             logger.logInfo(
@@ -145,10 +146,10 @@ export const updateBuyerBankTask = (
 
           pipe(
             verify(
-              body,
-              response.headers["X-Signature"],
+              res,
+              headers.get("x-signature") as string,
               conf.PAGOPA_BUYERBANKS_CERT_PEER,
-              response.headers["X-Signature-Type"]
+              headers.get("x-signature-type") as string
             ),
             O.fromEither,
             O.fold(

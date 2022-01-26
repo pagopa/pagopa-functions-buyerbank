@@ -40,19 +40,18 @@ paths:
       responses:
         "200":
           description: BuyerList retrieved
-          schema:
-            $ref: "#/definitions/getPayerPSPsSCT01Response"
           headers:
-            X-Signature:
+            x-signature:
               description: Signature performed by MyBank RS
               type: string
-            X-Signature-Type:
+            x-signature-type:
               description: Algorithm used for signature
               type: string
-            X-Thumbprint:
+            x-thumbprint:
               description: Thumbprint of the certificate used for signature
               type: string
-            
+          schema:
+            $ref: "#/definitions/getPayerPSPsSCT01Response"
         "403":
           description: Forbidden
         "500":
