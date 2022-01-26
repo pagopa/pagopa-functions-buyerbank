@@ -1,7 +1,4 @@
-import {
-  IResponseType,
-  ResponseHeaders
-} from "@pagopa/ts-commons/lib/requests";
+import { IResponseType } from "@pagopa/ts-commons/lib/requests";
 import * as E from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
@@ -20,13 +17,14 @@ import {
 export interface IResponseWithHeaders<T> {
   readonly value: T;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  readonly headers: ResponseHeaders;
+  readonly headers: any;
 }
 
 export const withApiRequestWrapper = <T, V>(
   logger: ILogger,
   apiCallWithParams: () => Promise<
-    t.Validation<IResponseType<number, T | V, never>>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    t.Validation<IResponseType<number, T | V, any>>
   >,
   successStatusCode: 200 | 201 | 202 = 200,
   errorServerHandler: <S extends number>(

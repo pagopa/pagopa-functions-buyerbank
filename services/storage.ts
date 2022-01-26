@@ -129,14 +129,8 @@ export const updateBuyerBankTask = (
         () => {
           const res = response.value;
 
-          // eslint-disable-next-line no-console
-          console.log(
-            `DEBUG:\n${JSON.stringify(response.value)} -\n{${JSON.stringify(
-              response.headers
-            )}}`
-          );
           if (
-            response.headers["Cache-Control"] !==
+            response.headers["X-Thumbprint"] !==
             conf.PAGOPA_BUYERBANKS_THUMBPRINT_PEER
           ) {
             logger.logInfo(
@@ -152,9 +146,9 @@ export const updateBuyerBankTask = (
           pipe(
             verify(
               body,
-              "", // response.headers["X-Signature"],
+              response.headers["X-Signature"],
               conf.PAGOPA_BUYERBANKS_CERT_PEER,
-              "" // response.headers["X-Signature-Type"]
+              response.headers["X-Signature-Type"]
             ),
             O.fromEither,
             O.fold(
