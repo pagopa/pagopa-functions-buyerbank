@@ -41,6 +41,52 @@ export const streamToString = (
   });
 };
 
+const getLastBlob = async (
+  blobServiceClient: BlobServiceClient,
+  container: string
+): Promise<string> => {
+  const containerClient = blobServiceClient.getContainerClient(container);
+  // eslint-disable-next-line functional/no-let
+  let res;
+
+  for await (const blob of listBlobs(blobServiceClient, container)) {
+    if (
+      res === undefined ||
+      blob.properties.lastModified.getTime() >
+        res.properties.lastModified.getTime()
+    ) {
+      res = blob;
+    }
+  }
+
+  if (res === undefined) {
+    throw Error("No blob found.");
+  }
+
+  const downloadResponse = await containerClient
+    .getBlobClient(res.name)
+    .download();
+
+  if (downloadResponse === undefined) {
+    throw new Error("Blob not found");
+  }
+
+  return JSON.parse(
+    await streamToString(
+      downloadResponse.readableStreamBody as NodeJS.ReadableStream
+    )
+  );
+};
+
+export const getLastBlobTask = (
+  blobServiceClient: BlobServiceClient,
+  container: string
+): TE.TaskEither<Error, string> =>
+  TE.tryCatch(
+    (): Promise<string> => getLastBlob(blobServiceClient, container),
+    E.toError
+  );
+
 export const getDayBlob = async (
   blobServiceClient: BlobServiceClient,
   container: string
