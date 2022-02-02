@@ -8,6 +8,19 @@ import * as E from "fp-ts/Either";
 export const encode = (data: string): string =>
   Buffer.from(data).toString("base64");
 
+export const formatKey = (key: string): string => {
+  const startToken = "-----BEGIN PRIVATE KEY-----";
+  const endToken = "-----END PRIVATE KEY-----";
+
+  const keyBody = key
+    .replace(startToken, "")
+    .replace(endToken, "")
+    .split(" ")
+    .join("\n");
+
+  return `${startToken}${keyBody}${endToken}`;
+};
+
 export const sign = (
   plainText: string,
   key: string,
