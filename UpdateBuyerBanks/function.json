@@ -7,5 +7,11 @@
       "schedule": "0 0 1 * * *"
     }
   ],
+  "retry": {
+    "strategy": "exponentialBackoff",
+    "maxRetryCount": 5,
+    "minimumInterval": "00:00:10",
+    "maximumInterval": "01:00:00"
+  },
   "scriptFile": "../dist/UpdateBuyerBanks/index.js"
 }

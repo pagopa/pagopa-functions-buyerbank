@@ -15,7 +15,7 @@ import {
 import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/TaskEither";
 import { BlobServiceClient } from "@azure/storage-blob";
-import { getDayBlobTask } from "../services/storage";
+import { getDayBlobTask, getLastBlobTask } from "../services/storage";
 import { getLogger } from "../utils/logging";
 import { getConfigOrThrow } from "../utils/config";
 
@@ -35,6 +35,10 @@ export const getBuyerBanks = (): IHttpHandler => (
 
   return pipe(
     getDayBlobTask(blobServiceClient, conf.BUYERBANKS_BLOB_CONTAINER),
+    TE.orElse((e: Error) => {
+      logger.logUnknown(e);
+      return getLastBlobTask(blobServiceClient, conf.BUYERBANKS_BLOB_CONTAINER);
+    }),
     TE.mapLeft(err => {
       logger.logUnknown(err);
       return ResponseErrorNotFound(

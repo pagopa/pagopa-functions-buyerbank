@@ -23,3 +23,27 @@ export const sign = (
     },
     err => E.toError(err)
   );
+
+const formatAlgoString = (algo: string): string => {
+  if (algo === "SHA256withRSA") {
+    return "RSA-SHA256";
+  } else {
+    return algo;
+  }
+};
+
+export const verify = (
+  plainText: string,
+  signedText: string,
+  key: string,
+  algorithm: string
+): E.Either<Error, boolean> =>
+  E.tryCatch(
+    () => {
+      const verifierObject = crypto.createVerify(formatAlgoString(algorithm));
+      verifierObject.update(plainText);
+
+      return verifierObject.verify(key, signedText, "base64");
+    },
+    err => E.toError(err)
+  );

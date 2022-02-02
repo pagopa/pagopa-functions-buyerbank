@@ -1,6 +1,7 @@
 import { generateKeyPairSync, createVerify } from "crypto";
 import { pipe } from "fp-ts/lib/function";
 import * as O from 'fp-ts/Option';
+import * as E from 'fp-ts/Either';
 
 /*
  * Unit test suite for authentication utilities
@@ -15,15 +16,14 @@ process.env = {
   AzureWebJobsStorage: "azws",
   QueueStorageConnection: "qsc"
 }
-import { sign } from '../auth';
+import { sign, verify } from '../auth';
+
 
 // Sign a plain text and verify the signature 
 describe("Authentication functions", () => {
   it("Should verify a signature", () => {
     const plainText = "Lorem ipsum sic dolor amet.";
-    const verifierObject = createVerify("RSA-SHA512");
-    verifierObject.update(plainText);
-
+    const alg = "RSA-SHA512"
     const { publicKey, privateKey } = generateKeyPairSync("rsa", {
       modulusLength: 4096,
       publicKeyEncoding: {
@@ -39,15 +39,25 @@ describe("Authentication functions", () => {
     });
 
     pipe(
-      sign(plainText, privateKey, 'top secret', "RSA-SHA512"),
+      sign(plainText, privateKey, 'top secret', alg),
       O.fromEither,
       O.fold(
         () => {
           throw new Error("Error during signature verification process")
         },
         (res) => {
-          const verified = verifierObject.verify(publicKey, res, "base64");
-          expect(verified).toBe(true)
+          pipe(
+            verify(plainText, res, publicKey, alg),
+            O.fromEither,
+            O.fold(
+              () => { throw new Error("Error during signature verification process") },
+              (verified) => {
+                if (!verified) {
+                  throw new Error("Signature cannot be verified")
+                }
+              }
+            )
+          );
         }
       )
     );

@@ -23,6 +23,7 @@ export const IConfig = t.interface({
   PAGOPA_BUYERBANKS_BRANCH: NonEmptyString,
   PAGOPA_BUYERBANKS_CERT: NonEmptyString,
   PAGOPA_BUYERBANKS_CERT_PASSPHRASE: t.string,
+  PAGOPA_BUYERBANKS_CERT_PEER: t.string,
   PAGOPA_BUYERBANKS_INSTITUTE: NonEmptyString,
   PAGOPA_BUYERBANKS_KEY_CERT: NonEmptyString,
   PAGOPA_BUYERBANKS_RS_URL: NonEmptyString,
@@ -30,6 +31,7 @@ export const IConfig = t.interface({
   PAGOPA_BUYERBANKS_SIGN_ALG: NonEmptyString,
   PAGOPA_BUYERBANKS_SIGN_ALG_STRING: NonEmptyString,
   PAGOPA_BUYERBANKS_THUMBPRINT: NonEmptyString,
+  PAGOPA_BUYERBANKS_THUMBPRINT_PEER: t.string,
   // QueueStorageConnection: NonEmptyString,
   isProduction: t.boolean
 });

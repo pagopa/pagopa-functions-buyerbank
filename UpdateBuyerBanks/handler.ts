@@ -71,7 +71,10 @@ export const updateBuyerBank = async (
       logger,
       conf
     ),
-    TE.mapLeft(err => logger.logUnknown(err)),
+    TE.mapLeft(err => {
+      logger.logUnknown(err);
+      throw err;
+    }),
     TE.map(_ => logger.logInfo("List updated"))
   )();
 };

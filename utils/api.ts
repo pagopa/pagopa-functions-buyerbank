@@ -14,17 +14,23 @@ import {
 /*
  * API utility function for response handling
  */
+export interface IResponseWithHeaders<T> {
+  readonly value: T;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  readonly headers: any;
+}
 
 export const withApiRequestWrapper = <T, V>(
   logger: ILogger,
   apiCallWithParams: () => Promise<
-    t.Validation<IResponseType<number, T | V, never>>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    t.Validation<IResponseType<number, T | V, any>>
   >,
   successStatusCode: 200 | 201 | 202 = 200,
   errorServerHandler: <S extends number>(
     response: IResponseType<S, V>
   ) => ErrorResponses = toErrorServerResponse
-): TaskEither<ErrorResponses, T> =>
+): TaskEither<ErrorResponses, IResponseWithHeaders<T>> =>
   pipe(
     TE.tryCatch(
       () => apiCallWithParams(),
@@ -48,7 +54,10 @@ export const withApiRequestWrapper = <T, V>(
                 ? TE.left(
                     errorServerHandler(responseType as IResponseType<number, V>)
                   )
-                : TE.of(responseType.value as T)
+                : TE.of({
+                    headers: responseType.headers,
+                    value: responseType.value as T
+                  })
           )
         )
     )

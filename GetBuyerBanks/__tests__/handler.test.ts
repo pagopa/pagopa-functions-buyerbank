@@ -12,6 +12,8 @@ process.env = {
   PAGOPA_BUYERBANKS_SIGN_ALG: "RSA-SHA256",
   PAGOPA_BUYERBANKS_SIGN_ALG_STRING: "SHA256withRSA",
   PAGOPA_BUYERBANKS_THUMBPRINT: "NonEmptyString",
+  PAGOPA_BUYERBANKS_THUMBPRINT_PEER: "NonEmptyString",
+  PAGOPA_BUYERBANKS_CERT_PEER: "NonEmptyString",
   AzureWebJobsStorage: "NonEmptyString"
 }
 import { getBuyerBanks } from "../handler";
