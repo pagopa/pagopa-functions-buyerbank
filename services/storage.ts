@@ -202,7 +202,11 @@ export const updateBuyerBankTask = (
               O.fromEither,
               O.fold(
                 () => {
-                  logger.logInfo("Error during signature verify.");
+                  logger.logInfo(
+                    `Error during signature verify. headers: ${JSON.stringify(
+                      headers
+                    )}`
+                  );
                   throw new Error("Signature cannot be verified");
                 },
                 verified => {
