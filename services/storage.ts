@@ -53,7 +53,7 @@ const getLastBlob = async (
     if (
       res === undefined ||
       blob.properties.lastModified.getTime() >
-      res.properties.lastModified.getTime()
+        res.properties.lastModified.getTime()
     ) {
       res = blob;
     }
