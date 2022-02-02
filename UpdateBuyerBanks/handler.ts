@@ -6,7 +6,7 @@ import * as MyBankClient from "../utils/MyBankCustomClient";
 import { getConfigOrThrow } from "../utils/config";
 import { fetchApi } from "../utils/fetch";
 import { getLogger } from "../utils/logging";
-import { sign } from "../utils/auth";
+import { formatKey, sign } from "../utils/auth";
 import { updateBuyerBankTask } from "../services/storage";
 import { getPayerPSPsSCT01Request } from "../generated/definitions/mybank/getPayerPSPsSCT01Request";
 
@@ -45,12 +45,18 @@ export const updateBuyerBank = async (
       signature => signature as boolean,
       _ => _
     ),
-    E.map(signature => signature),
-    E.mapLeft(_ =>
-      pipe(
+    E.map(signature => {
+      logger.logInfo("Precomputed signature found.");
+      return signature;
+    }),
+    E.mapLeft(_ => {
+      logger.logInfo(
+        "Precomputed signature not found. Start signing procedure."
+      );
+      return pipe(
         sign(
-          JSON.stringify(body),
-          conf.PAGOPA_BUYERBANKS_KEY_CERT.toString(),
+          body,
+          formatKey(conf.PAGOPA_BUYERBANKS_KEY_CERT.toString()),
           conf.PAGOPA_BUYERBANKS_CERT_PASSPHRASE.toString(),
           conf.PAGOPA_BUYERBANKS_SIGN_ALG.toString()
         ),
@@ -58,8 +64,8 @@ export const updateBuyerBank = async (
           (err: Error) => logger.logUnknown(err),
           (signature: string) => signature
         )
-      )
-    ),
+      );
+    }),
     E.toUnion
   )(conf.PAGOPA_BUYERBANKS_SIGNATURE);
 
