@@ -30,7 +30,6 @@ export const IConfigR = t.interface({
   PAGOPA_BUYERBANKS_SIGN_ALG: NonEmptyString,
   PAGOPA_BUYERBANKS_SIGN_ALG_STRING: NonEmptyString,
   PAGOPA_BUYERBANKS_THUMBPRINT: NonEmptyString,
-  PAGOPA_BUYERBANKS_THUMBPRINT_PEER: t.string,
   // QueueStorageConnection: NonEmptyString,
   isProduction: t.boolean
 });
