@@ -174,43 +174,46 @@ export const updateBuyerBankTask = (
       TE.tryCatch(
         () => {
           const res = response.value;
-          const headers: Headers = response.headers as Headers;
 
-          if (
-            headers.get("x-thumbprint") !==
-            conf.PAGOPA_BUYERBANKS_THUMBPRINT_PEER
-          ) {
-            logger.logInfo(
-              `Cannot validate response. Unkown thumbprint. ${JSON.stringify(
-                response.headers
-              )}`
-            );
-            throw new Error(
-              "Error cannot verify the signature. Unknown thumbprint"
+          if (conf.isProduction === true) {
+            const headers: Headers = response.headers as Headers;
+
+            if (
+              headers.get("x-thumbprint") !==
+              conf.PAGOPA_BUYERBANKS_THUMBPRINT_PEER
+            ) {
+              logger.logInfo(
+                `Cannot validate response. Unkown thumbprint. ${JSON.stringify(
+                  response.headers
+                )}`
+              );
+              throw new Error(
+                "Error cannot verify the signature. Unknown thumbprint"
+              );
+            }
+
+            pipe(
+              verify(
+                res,
+                headers.get("x-signature") as string,
+                conf.PAGOPA_BUYERBANKS_CERT_PEER,
+                headers.get("x-signature-type") as string
+              ),
+              O.fromEither,
+              O.fold(
+                () => {
+                  logger.logInfo("Error during signature verify.");
+                  throw new Error("Signature cannot be verified");
+                },
+                verified => {
+                  if (!verified) {
+                    logger.logInfo("Signature does not match.");
+                    throw new Error("Invalid signature");
+                  }
+                }
+              )
             );
           }
-
-          pipe(
-            verify(
-              res,
-              headers.get("x-signature") as string,
-              conf.PAGOPA_BUYERBANKS_CERT_PEER,
-              headers.get("x-signature-type") as string
-            ),
-            O.fromEither,
-            O.fold(
-              () => {
-                logger.logInfo("Error during signature verify.");
-                throw new Error("Signature cannot be verified");
-              },
-              verified => {
-                if (!verified) {
-                  logger.logInfo("Signature does not match.");
-                  throw new Error("Invalid signature");
-                }
-              }
-            )
-          );
 
           const blobClient = BlobServiceClient.fromConnectionString(
             conf.BUYERBANKS_SA_CONNECTION_STRING
