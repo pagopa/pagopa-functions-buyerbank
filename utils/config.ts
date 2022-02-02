@@ -16,14 +16,13 @@ import { NonEmptyString } from "@pagopa/ts-commons/lib/strings";
 // global app configuration
 export type IConfig = t.TypeOf<typeof IConfig>;
 // eslint-disable-next-line @typescript-eslint/ban-types
-export const IConfig = t.interface({
+export const IConfigR = t.interface({
   AzureWebJobsStorage: NonEmptyString,
   BUYERBANKS_BLOB_CONTAINER: NonEmptyString,
   BUYERBANKS_SA_CONNECTION_STRING: NonEmptyString,
   PAGOPA_BUYERBANKS_BRANCH: NonEmptyString,
   PAGOPA_BUYERBANKS_CERT: NonEmptyString,
   PAGOPA_BUYERBANKS_CERT_PASSPHRASE: t.string,
-  PAGOPA_BUYERBANKS_CERT_PEER: t.string,
   PAGOPA_BUYERBANKS_INSTITUTE: NonEmptyString,
   PAGOPA_BUYERBANKS_KEY_CERT: NonEmptyString,
   PAGOPA_BUYERBANKS_RS_URL: NonEmptyString,
@@ -31,10 +30,16 @@ export const IConfig = t.interface({
   PAGOPA_BUYERBANKS_SIGN_ALG: NonEmptyString,
   PAGOPA_BUYERBANKS_SIGN_ALG_STRING: NonEmptyString,
   PAGOPA_BUYERBANKS_THUMBPRINT: NonEmptyString,
-  PAGOPA_BUYERBANKS_THUMBPRINT_PEER: t.string,
   // QueueStorageConnection: NonEmptyString,
   isProduction: t.boolean
 });
+
+export const IConfigO = t.partial({
+  PAGOPA_BUYERBANKS_CERT_PEER: t.string,
+  PAGOPA_BUYERBANKS_THUMBPRINT_PEER: t.string
+});
+
+export const IConfig = t.intersection([IConfigO, IConfigR]);
 
 export const envConfig = {
   ...process.env,
