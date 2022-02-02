@@ -196,7 +196,7 @@ export const updateBuyerBankTask = (
               verify(
                 res,
                 headers.get("x-signature") as string,
-                conf.PAGOPA_BUYERBANKS_CERT_PEER,
+                conf.PAGOPA_BUYERBANKS_CERT_PEER as string,
                 headers.get("x-signature-type") as string
               ),
               O.fromEither,
