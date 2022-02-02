@@ -53,7 +53,7 @@ const getLastBlob = async (
     if (
       res === undefined ||
       blob.properties.lastModified.getTime() >
-        res.properties.lastModified.getTime()
+      res.properties.lastModified.getTime()
     ) {
       res = blob;
     }
@@ -177,15 +177,15 @@ export const updateBuyerBankTask = (
 
           if (conf.isProduction === true) {
             const headers: Headers = response.headers as Headers;
+            const thumbprint = headers.get("x-thumbprint");
+            const signature = headers.get("x-signature");
+            const signatureType = headers.get("x-signature-type");
 
-            if (
-              headers.get("x-thumbprint") !==
-              conf.PAGOPA_BUYERBANKS_THUMBPRINT_PEER
-            ) {
+            if (thumbprint !== conf.PAGOPA_BUYERBANKS_THUMBPRINT_PEER) {
               logger.logInfo(
-                `Cannot validate response. Unkown thumbprint. ${JSON.stringify(
-                  response.headers
-                )}`
+                `Cannot validate response. Unkown thumbprint (${headers.get(
+                  "x-thumbprint"
+                )}).`
               );
               throw new Error(
                 "Error cannot verify the signature. Unknown thumbprint"
@@ -195,17 +195,15 @@ export const updateBuyerBankTask = (
             pipe(
               verify(
                 JSON.stringify(res),
-                headers.get("x-signature") as string,
+                signature as string,
                 conf.PAGOPA_BUYERBANKS_CERT_PEER as string,
-                headers.get("x-signature-type") as string
+                signatureType as string
               ),
               O.fromEither,
               O.fold(
                 () => {
                   logger.logInfo(
-                    `Error during signature verify. headers: ${JSON.stringify(
-                      headers
-                    )}`
+                    `Error during signature verify.\n thumbprint: ${thumbprint}\nsignature: ${signature}`
                   );
                   throw new Error("Signature cannot be verified");
                 },
