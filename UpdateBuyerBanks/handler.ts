@@ -58,7 +58,8 @@ export const updateBuyerBank = async (
           body,
           formatKey(conf.PAGOPA_BUYERBANKS_KEY_CERT.toString()),
           conf.PAGOPA_BUYERBANKS_CERT_PASSPHRASE.toString(),
-          conf.PAGOPA_BUYERBANKS_SIGN_ALG.toString()
+          conf.PAGOPA_BUYERBANKS_SIGN_ALG.toString(),
+          logger
         ),
         E.fold(
           (err: Error) => logger.logUnknown(err),

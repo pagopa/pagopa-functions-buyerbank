@@ -5,9 +5,8 @@ import { pipe, flow } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as E from "fp-ts/Either";
 import {
-  IResponseErrorInternal,
+  IResponseErrorGeneric,
   IResponseSuccessJson,
-  ResponseErrorInternal,
   ResponseSuccessJson
 } from "@pagopa/ts-commons/lib/responses";
 import {
@@ -22,12 +21,15 @@ import { getLogger } from "../utils/logging";
 import { formatKey, sign } from "../utils/auth";
 import { updateBuyerBankTask } from "../services/storage";
 import { getPayerPSPsSCT01Request } from "../generated/definitions/mybank/getPayerPSPsSCT01Request";
+import { ErrorResponses } from "../utils/responses";
 
 const conf = getConfigOrThrow();
 
 type IHttpHandler = (
   context: Context
-) => Promise<IResponseErrorInternal | IResponseSuccessJson<IResponseError>>;
+) => Promise<
+  ErrorResponses | IResponseErrorGeneric | IResponseSuccessJson<IResponseError>
+>;
 
 interface IResponseError {
   readonly result: string;
@@ -49,7 +51,9 @@ const mybankclient = MyBankClient.createClient({
 
 export const syncBuyerBanks = (): IHttpHandler => (
   context: Context
-): Promise<IResponseErrorInternal | IResponseSuccessJson<IResponseError>> => {
+): Promise<
+  ErrorResponses | IResponseErrorGeneric | IResponseSuccessJson<IResponseError>
+> => {
   const logger = getLogger(context, "BuyerBankService", "GetBuyerBank");
 
   const signedBody = flow(
@@ -70,7 +74,8 @@ export const syncBuyerBanks = (): IHttpHandler => (
           body,
           formatKey(conf.PAGOPA_BUYERBANKS_KEY_CERT.toString()),
           conf.PAGOPA_BUYERBANKS_CERT_PASSPHRASE.toString(),
-          conf.PAGOPA_BUYERBANKS_SIGN_ALG.toString()
+          conf.PAGOPA_BUYERBANKS_SIGN_ALG.toString(),
+          logger
         ),
         E.fold(
           (err: Error) => logger.logUnknown(err),
@@ -91,7 +96,7 @@ export const syncBuyerBanks = (): IHttpHandler => (
     ),
     TE.mapLeft(err => {
       logger.logUnknown(err);
-      return ResponseErrorInternal("Update error");
+      return err;
     }),
     TE.map(_ => {
       logger.logInfo("List updated");
