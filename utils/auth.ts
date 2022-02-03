@@ -62,8 +62,13 @@ export const verify = (
     () => {
       const verifierObject = crypto.createVerify(formatAlgoString(algorithm));
       verifierObject.update(plainText);
+      const res = verifierObject.verify(key, signedText, "base64");
 
-      return verifierObject.verify(key, signedText, "base64");
+      logger.logInfo(
+        `Verify response.\ntext: ${plainText}\nsignature: ${signedText}\nalgorithm: ${algorithm}\nResult:${res}`
+      );
+
+      return res;
     },
     err => {
       logger.logInfo(`Cannot verify message.\n${err as string}`);
