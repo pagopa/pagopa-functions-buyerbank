@@ -67,7 +67,7 @@ const getLastBlob = async (
     if (
       res === undefined ||
       blob.properties.lastModified.getTime() >
-      res.properties.lastModified.getTime()
+        res.properties.lastModified.getTime()
     ) {
       res = blob;
     }
@@ -204,7 +204,7 @@ const verifyResponse = (
 
   return pipe(
     verify(
-      res,
+      JSON.stringify(res),
       signature as string,
       conf.PAGOPA_BUYERBANKS_CERT_PEER as string,
       signatureType as string,
