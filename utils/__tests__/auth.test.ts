@@ -17,6 +17,18 @@ process.env = {
   QueueStorageConnection: "qsc"
 }
 import { sign, verify } from '../auth';
+import { ILogger } from "../logging";
+
+const logInfo = (msg: string) => console.log(msg);
+const logError = (err: Error) => console.log(`err: ${err.message}`);
+const logUnkown = (err: unknown) => console.log(err)
+
+const logger = {
+  logInfo,
+  logError,
+  logUnkown
+}
+
 
 
 // Sign a plain text and verify the signature 
@@ -39,7 +51,7 @@ describe("Authentication functions", () => {
     });
 
     pipe(
-      sign(plainText, privateKey, 'top secret', alg),
+      sign(plainText, privateKey, 'top secret', alg, logger as unknown as ILogger),
       O.fromEither,
       O.fold(
         () => {
@@ -47,7 +59,7 @@ describe("Authentication functions", () => {
         },
         (res) => {
           pipe(
-            verify(plainText, res, publicKey, alg),
+            verify(plainText, res, publicKey, alg, logger as unknown as ILogger),
             O.fromEither,
             O.fold(
               () => { throw new Error("Error during signature verification process") },

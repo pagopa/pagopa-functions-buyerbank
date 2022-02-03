@@ -6,6 +6,13 @@ import {
   BlobServiceClient,
   BlockBlobUploadResponse
 } from "@azure/storage-blob";
+import {
+  HttpStatusCodeEnum,
+  IResponseErrorForbiddenNotAuthorized,
+  IResponseErrorGeneric,
+  ResponseErrorForbiddenNotAuthorized,
+  ResponseErrorGeneric
+} from "@pagopa/ts-commons/lib/responses";
 import * as E from "fp-ts/lib/Either";
 import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
@@ -41,6 +48,13 @@ export const streamToString = (
   });
 };
 
+const genericError = (e: Error): IResponseErrorGeneric =>
+  ResponseErrorGeneric(
+    HttpStatusCodeEnum.HTTP_STATUS_500,
+    "Error during blob update.",
+    JSON.stringify(e)
+  );
+
 const getLastBlob = async (
   blobServiceClient: BlobServiceClient,
   container: string
@@ -53,14 +67,14 @@ const getLastBlob = async (
     if (
       res === undefined ||
       blob.properties.lastModified.getTime() >
-      res.properties.lastModified.getTime()
+        res.properties.lastModified.getTime()
     ) {
       res = blob;
     }
   }
 
   if (res === undefined) {
-    throw Error("No blob found.");
+    throw new Error("No blob found.");
   }
 
   const downloadResponse = await containerClient
@@ -161,82 +175,144 @@ const GetMyBanksData = (
     err => toErrorServerResponse(err)
   );
 
+const verifyResponse = (
+  responseWithHeader: IResponseWithHeaders<string>,
+  conf: IConfig,
+  logger: ILogger
+): E.Either<
+  IResponseErrorGeneric | IResponseErrorForbiddenNotAuthorized,
+  boolean
+> => {
+  const headers: Headers = responseWithHeader.headers as Headers;
+  const res = responseWithHeader.value;
+  const thumbprint = headers.get("x-thumbprint");
+  const signature = headers.get("x-signature");
+  const signatureType = headers.get("x-signature-type");
+
+  if (thumbprint !== conf.PAGOPA_BUYERBANKS_THUMBPRINT_PEER) {
+    logger.logInfo(
+      `Cannot validate response. Unkown thumbprint (${thumbprint}).`
+    );
+    return E.left(
+      ResponseErrorGeneric(
+        HttpStatusCodeEnum.HTTP_STATUS_503,
+        "Received unknown thumprint.",
+        `Thumbprint: ${thumbprint}`
+      )
+    );
+  }
+
+  return pipe(
+    verify(
+      JSON.stringify(res),
+      signature as string,
+      conf.PAGOPA_BUYERBANKS_CERT_PEER as string,
+      signatureType as string,
+      logger
+    ),
+    O.fromEither,
+    O.fold(
+      () => {
+        logger.logInfo(
+          `Error during signature verify.\n thumbprint: ${thumbprint}\nsignature: ${signature}\n`
+        );
+        return E.left(ResponseErrorForbiddenNotAuthorized);
+      },
+      verified =>
+        verified === true
+          ? E.right(true)
+          : E.left(ResponseErrorForbiddenNotAuthorized)
+    )
+  );
+};
+
+export const updateNoVerify = (
+  data: string,
+  conf: IConfig
+): TE.TaskEither<
+  ErrorResponses | IResponseErrorGeneric,
+  BlockBlobUploadResponse
+> => {
+  const blobClient = BlobServiceClient.fromConnectionString(
+    conf.BUYERBANKS_SA_CONNECTION_STRING
+  );
+  return pipe(
+    setDayBlobTask(
+      blobClient,
+      conf.BUYERBANKS_BLOB_CONTAINER,
+      JSON.stringify({
+        ...{
+          banks: data,
+          timestamp: new Date().toISOString()
+        },
+        ...{
+          serviceId: conf.PAGOPA_BUYERBANKS_RS_URL.toString().replace(
+            "https://",
+            ""
+          )
+        }
+      })
+    ),
+    TE.mapLeft((e: Error) => genericError(e))
+  );
+};
+
+export const updateAndVerify = (
+  responseVerify: IResponseWithHeaders<string>,
+  conf: IConfig,
+  logger: ILogger
+): TE.TaskEither<
+  ErrorResponses | IResponseErrorGeneric,
+  BlockBlobUploadResponse
+> => {
+  const client = BlobServiceClient.fromConnectionString(
+    conf.BUYERBANKS_SA_CONNECTION_STRING
+  );
+  return pipe(
+    verifyResponse(responseVerify, conf, logger),
+    E.fold(
+      err => TE.left(err),
+      _verified =>
+        pipe(
+          setDayBlobTask(
+            client,
+            conf.BUYERBANKS_BLOB_CONTAINER,
+            JSON.stringify({
+              ...{
+                banks: responseVerify.value,
+                timestamp: new Date().toISOString()
+              },
+              ...{
+                serviceId: conf.PAGOPA_BUYERBANKS_RS_URL.toString().replace(
+                  "https://",
+                  ""
+                )
+              }
+            })
+          ),
+          TE.mapLeft((e: Error) => genericError(e))
+        )
+    )
+  );
+};
+
 export const updateBuyerBankTask = (
   params: any,
   body: string,
   client: any,
   logger: ILogger,
   conf: IConfig
-): TE.TaskEither<unknown, Error | BlockBlobUploadResponse> =>
+): TE.TaskEither<
+  ErrorResponses | IResponseErrorGeneric,
+  BlockBlobUploadResponse
+> =>
   pipe(
     GetMyBanksData(logger, params, body, client),
-    TE.chain(response =>
-      TE.tryCatch(
-        () => {
-          const res = response.value;
-
-          if (conf.isProduction === true) {
-            const headers: Headers = response.headers as Headers;
-            const thumbprint = headers.get("x-thumbprint");
-            const signature = headers.get("x-signature");
-            const signatureType = headers.get("x-signature-type");
-
-            if (thumbprint !== conf.PAGOPA_BUYERBANKS_THUMBPRINT_PEER) {
-              logger.logInfo(
-                `Cannot validate response. Unkown thumbprint (${headers.get(
-                  "x-thumbprint"
-                )}).`
-              );
-              throw new Error(
-                "Error cannot verify the signature. Unknown thumbprint"
-              );
-            }
-
-            pipe(
-              verify(
-                JSON.stringify(res),
-                signature as string,
-                conf.PAGOPA_BUYERBANKS_CERT_PEER as string,
-                signatureType as string
-              ),
-              O.fromEither,
-              O.fold(
-                () => {
-                  logger.logInfo(
-                    `Error during signature verify.\n thumbprint: ${thumbprint}\nsignature: ${signature}`
-                  );
-                  throw new Error("Signature cannot be verified");
-                },
-                verified => {
-                  if (!verified) {
-                    logger.logInfo("Signature does not match.");
-                    throw new Error("Invalid signature");
-                  }
-                }
-              )
-            );
-          }
-
-          const blobClient = BlobServiceClient.fromConnectionString(
-            conf.BUYERBANKS_SA_CONNECTION_STRING
-          );
-
-          return pipe(
-            setDayBlobTask(
-              blobClient,
-              conf.BUYERBANKS_BLOB_CONTAINER,
-              JSON.stringify({
-                ...{
-                  banks: res,
-                  timestamp: new Date().toISOString()
-                },
-                ...{ serviceId: conf.PAGOPA_BUYERBANKS_RS_URL }
-              })
-            ),
-            TE.toUnion
-          )();
-        },
-        reason => reason
-      )
-    )
+    TE.chain(resp => {
+      if (conf.isProduction) {
+        return updateAndVerify(resp, conf, logger);
+      } else {
+        return updateNoVerify(resp.value, conf);
+      }
+    })
   );

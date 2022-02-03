@@ -1,5 +1,6 @@
 import * as crypto from "crypto";
 import * as E from "fp-ts/Either";
+import { ILogger } from "./logging";
 
 /*
  * Set of utility functions for the authentication process
@@ -25,7 +26,8 @@ export const sign = (
   plainText: string,
   key: string,
   passphrase: string,
-  algorithm: string
+  algorithm: string,
+  logger: ILogger
 ): E.Either<Error, string> =>
   E.tryCatch(
     () => {
@@ -34,7 +36,11 @@ export const sign = (
 
       return signerObject.sign({ key, passphrase }, "base64");
     },
-    err => E.toError(err)
+    err => {
+      logger.logInfo(`Cannot sign message.\n${err as string}`);
+      logger.logUnknown(err);
+      return E.toError(err);
+    }
   );
 
 const formatAlgoString = (algo: string): string => {
@@ -49,7 +55,8 @@ export const verify = (
   plainText: string,
   signedText: string,
   key: string,
-  algorithm: string
+  algorithm: string,
+  logger: ILogger
 ): E.Either<Error, boolean> =>
   E.tryCatch(
     () => {
@@ -58,5 +65,9 @@ export const verify = (
 
       return verifierObject.verify(key, signedText, "base64");
     },
-    err => E.toError(err)
+    err => {
+      logger.logInfo(`Cannot verify message.\n${err as string}`);
+      logger.logUnknown(err as string);
+      return E.toError(err);
+    }
   );
