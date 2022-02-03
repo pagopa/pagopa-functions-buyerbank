@@ -67,7 +67,7 @@ const getLastBlob = async (
     if (
       res === undefined ||
       blob.properties.lastModified.getTime() >
-        res.properties.lastModified.getTime()
+      res.properties.lastModified.getTime()
     ) {
       res = blob;
     }
@@ -204,7 +204,7 @@ const verifyResponse = (
 
   return pipe(
     verify(
-      JSON.stringify(res),
+      res,
       signature as string,
       conf.PAGOPA_BUYERBANKS_CERT_PEER as string,
       signatureType as string,
@@ -214,7 +214,7 @@ const verifyResponse = (
     O.fold(
       () => {
         logger.logInfo(
-          `Error during signature verify.\n thumbprint: ${thumbprint}\nsignature: ${signature}\n`
+          `Error during signature verify.\n message: ${res}\nthumbprint: ${thumbprint}\nsignature: ${signature}\n`
         );
         return E.left(ResponseErrorForbiddenNotAuthorized);
       },
