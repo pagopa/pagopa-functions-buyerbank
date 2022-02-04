@@ -22,6 +22,19 @@ export const formatKey = (key: string): string => {
   return `${startToken}${keyBody}${endToken}`;
 };
 
+export const formatCert = (cert: string): string => {
+  const startToken = "-----BEGIN CERTIFICATE-----";
+  const endToken = "-----END CERTIFICATE-----";
+
+  const certBody = cert
+    .replace(startToken, "")
+    .replace(endToken, "")
+    .split(" ")
+    .join("\n");
+
+  return `${startToken}${certBody}${endToken}`;
+};
+
 export const sign = (
   plainText: string,
   key: string,

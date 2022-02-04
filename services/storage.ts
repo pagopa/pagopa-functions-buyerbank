@@ -18,7 +18,7 @@ import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as O from "fp-ts/Option";
 import { IResponseWithHeaders, withApiRequestWrapper } from "../utils/api";
-import { verify } from "../utils/auth";
+import { formatCert, verify } from "../utils/auth";
 import { IConfig } from "../utils/config";
 import { ILogger } from "../utils/logging";
 import { ErrorResponses, toErrorServerResponse } from "../utils/responses";
@@ -206,7 +206,7 @@ const verifyResponse = (
     verify(
       JSON.stringify(res),
       signature as string,
-      conf.PAGOPA_BUYERBANKS_CERT_PEER as string,
+      formatCert(conf.PAGOPA_BUYERBANKS_CERT_PEER as string),
       signatureType as string,
       logger
     ),
