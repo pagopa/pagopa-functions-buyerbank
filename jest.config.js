@@ -6,7 +6,7 @@ module.exports = {
     'default',
     ['jest-junit', {
       outputDirectory: './test_reports',
-      outputName: 'pagopa-functions-checkout-TEST.xml',
+      outputName: 'pagopa-functions-buyerbanks-TEST.xml',
     }]
   ],
   coverageReporters: ["cobertura"],
