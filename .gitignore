@@ -14,7 +14,7 @@ __blobstorage__
 project.lock.json
 
 /packages
-/TestResults
+/test_reports
 
 /tools/NuGet.exe
 /App_Data
