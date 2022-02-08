@@ -88,3 +88,9 @@ stages:
             testResultsFormat: 'JUnit'
             testResultsFiles: '**/*-TEST.xml' 
             searchFolder: '$(System.DefaultWorkingDirectory)'
+
+        - task: PublishCodeCoverageResults@1
+          inputs:
+            codeCoverageTool: 'Cobertura'
+            summaryFileLocation: 'coverage/cobertura-coverage.xml'
+          displayName: 'Publish Code Coverage'
