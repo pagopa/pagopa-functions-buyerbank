@@ -82,3 +82,9 @@ stages:
         - bash: |
             bash <(curl -s https://codecov.io/bash)
           displayName: 'Code coverage'
+
+        - task: PublishTestResults@2
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: '**/*-TEST.xml' 
+            searchFolder: '$(System.DefaultWorkingDirectory)'
