@@ -36,7 +36,7 @@
           }
         ],
         "url": {
-          "raw": "https://api.dev.platform.pagopa.it/api/buyerbanks/v1/banks",
+          "raw": "https://api.dev.platform.pagopa.it/payment-manager/buyerbanks/v1/banks",
           "protocol": "https",
           "host": [
             "api",
@@ -46,7 +46,7 @@
             "it"
           ],
           "path": [
-            "api",
+            "payment-manager",
             "buyerbanks",
             "v1",
             "banks"
