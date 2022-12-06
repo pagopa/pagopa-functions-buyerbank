@@ -67,7 +67,7 @@ const getLastBlob = async (
     if (
       res === undefined ||
       blob.properties.lastModified.getTime() >
-        res.properties.lastModified.getTime()
+      res.properties.lastModified.getTime()
     ) {
       res = blob;
     }
@@ -214,7 +214,7 @@ const verifyResponse = (
     O.fold(
       () => {
         logger.logInfo(
-          `Error during signature verify.\n message: ${res}\nthumbprint: ${thumbprint}\nsignature: ${signature}\n`
+          `Error during signature verify.\n message: ${JSON.stringify(res)}\nthumbprint: ${thumbprint}\nsignature: ${signature}\n`
         );
         return E.left(ResponseErrorForbiddenNotAuthorized);
       },

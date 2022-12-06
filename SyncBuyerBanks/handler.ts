@@ -54,7 +54,7 @@ export const syncBuyerBanks = (): IHttpHandler => (
 ): Promise<
   ErrorResponses | IResponseErrorGeneric | IResponseSuccessJson<IResponseError>
 > => {
-  const logger = getLogger(context, "BuyerBankService", "GetBuyerBank");
+  const logger = getLogger(context, "BuyerBankService", "SyncBuyerBank");
 
   const signedBody = flow(
     E.fromPredicate(

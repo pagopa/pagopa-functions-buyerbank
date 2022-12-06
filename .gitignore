@@ -38,6 +38,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.env.*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -60,3 +61,7 @@ generated
 .eslintcache
 
 azure-functions-core-tools
+
+# azurite tools
+__blobstorage__/
+__queuestorage__/
