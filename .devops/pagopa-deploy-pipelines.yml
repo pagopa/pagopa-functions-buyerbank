@@ -1,11 +1,11 @@
 # Azure DevOps pipeline to release a new version and deploy to production.
 
 variables:
-  HEALTHCHECK_PATH: '/api/v1/info'
+  HEALTHCHECK_PATH: "/api/v1/info"
 
 parameters:
-  - name: 'RELEASE_SEMVER'
-    displayName: 'When packing a release, define the version bump to apply'
+  - name: "RELEASE_SEMVER"
+    displayName: "When packing a release, define the version bump to apply"
     type: string
     values:
       - major
@@ -23,7 +23,7 @@ pr: none
 # runtime, the pipeline is currently configured to use a Windows hosted image for
 # the build and deploy.
 pool:
-  vmImage: 'windows-2019'
+  vmImage: "windows-2019"
 
 resources:
   repositories:
@@ -31,53 +31,52 @@ resources:
       type: github
       name: pagopa/azure-pipeline-templates
       ref: refs/tags/v18
-      endpoint: 'io-azure-devops-github-ro'
+      endpoint: "io-azure-devops-github-ro"
 
 stages:
-
   # Create a relase
   # Activated when ONE OF these are met:
-  # - is on branch master 
+  # - is on branch master
   # - is a tag in the form v{version}-RELEASE
   - stage: Release
-    condition:
-      and(
-        succeeded(),
-        or(
-          eq(variables['Build.SourceBranch'], 'refs/heads/master'),
-          and(
-            startsWith(variables['Build.SourceBranch'], 'refs/tags'),
-            endsWith(variables['Build.SourceBranch'], '-RELEASE')
-          )
-        )
-      )
+    # condition:
+    #   and(
+    #     succeeded(),
+    #     or(
+    #       eq(variables['Build.SourceBranch'], 'refs/heads/master'),
+    #       and(
+    #         startsWith(variables['Build.SourceBranch'], 'refs/tags'),
+    #         endsWith(variables['Build.SourceBranch'], '-RELEASE')
+    #       )
+    #     )
+    #   )
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: "ubuntu-latest"
     jobs:
       - job: make_release
         steps:
-        - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
-          - template: templates/node-job-setup/template.yaml@pagopaCommons
-            parameters:
-              persistCredentials: true
-          - template: templates/node-github-release/template.yaml@pagopaCommons
-            parameters:
-              semver: '${{ parameters.RELEASE_SEMVER }}'
-              gitEmail: $(GIT_EMAIL)
-              gitUsername: $(GIT_USERNAME)
-              gitHubConnection: $(GITHUB_CONNECTION)
+          - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+              - template: templates/node-job-setup/template.yaml@pagopaCommons
+                parameters:
+                  persistCredentials: true
+              - template: templates/node-github-release/template.yaml@pagopaCommons
+                parameters:
+                  semver: "${{ parameters.RELEASE_SEMVER }}"
+                  gitEmail: $(GIT_EMAIL)
+                  gitUsername: $(GIT_USERNAME)
+                  gitHubConnection: $(GITHUB_CONNECTION)
 
-        - ${{ if ne(variables['Build.SourceBranch'], 'refs/heads/master') }}:
-          - script: |
-              echo "We assume this reference to be a valid release: $(Build.SourceBranch). Therefore, there is no need to bundle a new release."
-            displayName: 'Skip release bundle'
+          - ${{ if ne(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+              - script: |
+                  echo "We assume this reference to be a valid release: $(Build.SourceBranch). Therefore, there is no need to bundle a new release."
+                displayName: "Skip release bundle"
 
     # Prepare Artifact
   - stage: Prepare_artifact
     dependsOn:
       - Release
     jobs:
-      - job: 'prepare_artifact'
+      - job: "prepare_artifact"
         steps:
           # Build application
           - template: templates/node-job-setup/template.yaml@pagopaCommons
@@ -90,17 +89,17 @@ stages:
               gitReference: ${{ replace(replace(variables['Build.SourceBranch'], 'refs/tags/', ''), 'refs/heads/', '') }}
           - script: |
               yarn predeploy
-            displayName: 'Build'
+            displayName: "Build"
           # Install functions extensions
           - task: DotNetCoreCLI@2
             inputs:
               command: "build"
-              arguments: "-o bin"   
-          # Copy application to  
+              arguments: "-o bin"
+          # Copy application to
           - task: CopyFiles@2
             inputs:
-              SourceFolder: '$(System.DefaultWorkingDirectory)'
-              TargetFolder: '$(System.DefaultWorkingDirectory)/bundle'
+              SourceFolder: "$(System.DefaultWorkingDirectory)"
+              TargetFolder: "$(System.DefaultWorkingDirectory)/bundle"
               Contents: |
                 **/*
                 !.git/**/*
@@ -120,53 +119,52 @@ stages:
                 !Dangerfile.js
                 !CODEOWNERS
                 !__*/**/*
-            displayName: 'Copy deploy files'
-          
+            displayName: "Copy deploy files"
+
           - publish: $(System.DefaultWorkingDirectory)/bundle
             artifact: Bundle
-
 
   - stage: Deploy_dev
     dependsOn:
       - Prepare_artifact
     jobs:
-      - job: 'do_deploy'
+      - job: "do_deploy"
         steps:
           - checkout: none
           - download: current
             artifact: Bundle
-          - task: AzureFunctionApp@1  
+          - task: AzureFunctionApp@1
             inputs:
-              azureSubscription: '$(DEV_AZURE_SUBSCRIPTION)'
-              resourceGroupName: 'pagopa-d-buyerbanks-rg'
-              appType: 'functionApp'
-              appName: 'pagopa-d-fn-buyerbanks'
-              package: '$(Pipeline.Workspace)/Bundle'
-              deploymentMethod: 'auto'
+              azureSubscription: "$(DEV_AZURE_SUBSCRIPTION)"
+              resourceGroupName: "pagopa-d-buyerbanks-rg"
+              appType: "functionApp"
+              appName: "pagopa-d-fn-buyerbanks"
+              package: "$(Pipeline.Workspace)/Bundle"
+              deploymentMethod: "auto"
               deployToSlotOrASE: true
-              slotName: 'production'
+              slotName: "production"
               displayName: Deploy to DEV
-            
+
   - stage: API_Tests
     dependsOn:
       - Deploy_dev
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: "ubuntu-latest"
     jobs:
       - job: api_tests
         steps:
           - script: |
               yarn global add newman
-            displayName: 'newman installation'
+            displayName: "newman installation"
           - script: |
               newman run https://raw.githubusercontent.com/pagopa/pagopa-functions-buyerbank/master/api-tests/buyerbanks.api.tests.json --environment=https://raw.githubusercontent.com/pagopa/pagopa-functions-buyerbank/master/api-tests/dev.envs.json --reporters cli,junit --reporter-junit-export Results/buyerbanks-api-TEST.xml
-            displayName: 'Run api test'
-            continueOnError: true 
+            displayName: "Run api test"
+            continueOnError: true
           - task: PublishTestResults@2
             inputs:
-              testResultsFormat: 'JUnit'
-              testResultsFiles: '**/*-TEST.xml' 
-              searchFolder: '$(System.DefaultWorkingDirectory)'
+              testResultsFormat: "JUnit"
+              testResultsFiles: "**/*-TEST.xml"
+              searchFolder: "$(System.DefaultWorkingDirectory)"
 
   - stage: DEV_to_UAT_promotion
     dependsOn:
@@ -177,31 +175,30 @@ stages:
         pool: server
         timeoutInMinutes: 4320 # 3 days
         steps:
-        - task: ManualValidation@0
-          timeoutInMinutes: 4320 # 3 days
-          inputs:
-            onTimeout: 'skip'
-
+          - task: ManualValidation@0
+            timeoutInMinutes: 4320 # 3 days
+            inputs:
+              onTimeout: "skip"
 
   - stage: Deploy_uat
     dependsOn:
       - DEV_to_UAT_promotion
     jobs:
-      - job: 'do_deploy'
+      - job: "do_deploy"
         steps:
           - checkout: none
           - download: current
             artifact: Bundle
-          - task: AzureFunctionApp@1  
+          - task: AzureFunctionApp@1
             inputs:
-              azureSubscription: '$(UAT_AZURE_SUBSCRIPTION)'
-              resourceGroupName: 'pagopa-u-buyerbanks-rg'
-              appType: 'functionApp'
-              appName: 'pagopa-u-fn-buyerbanks'
-              package: '$(Pipeline.Workspace)/Bundle'
-              deploymentMethod: 'auto'
+              azureSubscription: "$(UAT_AZURE_SUBSCRIPTION)"
+              resourceGroupName: "pagopa-u-buyerbanks-rg"
+              appType: "functionApp"
+              appName: "pagopa-u-fn-buyerbanks"
+              package: "$(Pipeline.Workspace)/Bundle"
+              deploymentMethod: "auto"
               deployToSlotOrASE: true
-              slotName: 'production'
+              slotName: "production"
               displayName: Deploy to UAT
 
   - stage: UAT_to_PROD_promotion
@@ -213,29 +210,28 @@ stages:
         pool: server
         timeoutInMinutes: 4320 # 3 days
         steps:
-        - task: ManualValidation@0
-          timeoutInMinutes: 4320 # 3 days
-          inputs:
-            onTimeout: 'skip'
-
+          - task: ManualValidation@0
+            timeoutInMinutes: 4320 # 3 days
+            inputs:
+              onTimeout: "skip"
 
   - stage: Deploy_prod
     dependsOn:
       - UAT_to_PROD_promotion
     jobs:
-      - job: 'do_deploy'
+      - job: "do_deploy"
         steps:
           - checkout: none
           - download: current
             artifact: Bundle
-          - task: AzureFunctionApp@1  
+          - task: AzureFunctionApp@1
             inputs:
-              azureSubscription: '$(PROD_AZURE_SUBSCRIPTION)'
-              resourceGroupName: 'pagopa-p-buyerbanks-rg'
-              appType: 'functionApp'
-              appName: 'pagopa-p-fn-buyerbanks'
-              package: '$(Pipeline.Workspace)/Bundle'
-              deploymentMethod: 'auto'
+              azureSubscription: "$(PROD_AZURE_SUBSCRIPTION)"
+              resourceGroupName: "pagopa-p-buyerbanks-rg"
+              appType: "functionApp"
+              appName: "pagopa-p-fn-buyerbanks"
+              package: "$(Pipeline.Workspace)/Bundle"
+              deploymentMethod: "auto"
               deployToSlotOrASE: true
-              slotName: 'production'
+              slotName: "production"
               displayName: Deploy to PROD
