@@ -77,9 +77,7 @@ export const verify = (
       verifierObject.update(plainText);
       const res = verifierObject.verify(key, signedText, "base64");
 
-      logger.logInfo(
-        `Verify response.\ntext: ${plainText}\nsignature: ${signedText}\nalgorithm: ${algorithm}\nResult:${res}`
-      );
+      logger.logInfo(`Verify response. Result:${res}`);
 
       return res;
     },
