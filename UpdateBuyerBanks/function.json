@@ -4,7 +4,7 @@
       "type": "timerTrigger",
       "direction": "in",
       "name": "timer",
-      "schedule": "0 0 1 * * *"
+      "schedule": "0 0 31 2 * *"
     }
   ],
   "retry": {
@@ -13,5 +13,6 @@
     "minimumInterval": "00:00:10",
     "maximumInterval": "01:00:00"
   },
-  "scriptFile": "../dist/UpdateBuyerBanks/index.js"
+  "scriptFile": "../dist/UpdateBuyerBanks/index.js",
+  "disabled": true
 }
