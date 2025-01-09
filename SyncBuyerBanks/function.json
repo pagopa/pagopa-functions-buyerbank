@@ -16,5 +16,6 @@
       "name": "res"
     }
   ],
-  "scriptFile": "../dist/SyncBuyerBanks/index.js"
+  "scriptFile": "../dist/SyncBuyerBanks/index.js",
+  "disabled": true
 }
