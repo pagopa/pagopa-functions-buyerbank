@@ -22,6 +22,7 @@ const app = express();
 secureExpressApp(app);
 
 // Add express route
+// eslint-disable-next-line extra-rules/no-commented-out-code
 // app.put("/api/v1/banks", SyncBuyerbanksCtrl());
 
 const azureFunctionHandler = createAzureFunctionHandler(app);
