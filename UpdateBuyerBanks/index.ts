@@ -1,5 +1,5 @@
 import { AzureFunction, Context } from "@azure/functions";
-import { updateBuyerBank } from "./handler";
+// import { updateBuyerBank } from "./handler";
 
 const timerTrigger: AzureFunction = (
   context: Context,
